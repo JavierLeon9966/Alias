@@ -1,0 +1,6 @@
+---
+alert: false #Everyone that has alias.alerts permission
+ban: 'You are banned' #Ban message
+mode: none #Options: none, ban
+data: ['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] #Check for matching data in which will alert the staff members or ban the player
+...
