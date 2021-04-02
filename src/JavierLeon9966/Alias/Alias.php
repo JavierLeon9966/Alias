@@ -28,7 +28,7 @@ class Alias extends PluginBase implements Listener{
 				'file' => $databaseConfig['sqlite']['file'] ?? 'players.sqlite'
 			],
 			'mysql' => [
-				'host' => $databaseConfig['mysql']['host'] ?? 127.0.0.1,
+				'host' => $databaseConfig['mysql']['host'] ?? '127.0.0.1',
 				'username' => $databaseConfig['mysql']['username'] ?? 'Alias',
 				'password' => $databaseConfig['mysql']['password'] ?? 'mypassword123',
 				'schema' => $databaseConfig['mysql']['schema'] ?? 'Alias',
