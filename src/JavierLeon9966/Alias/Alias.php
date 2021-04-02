@@ -114,8 +114,8 @@ class Alias extends PluginBase implements Listener{
 					$this->players[$username][$datum][] = $packet->clientData[$datum];
 				}
 			}
+			$this->saveDatabase($username);
 		}
-		$this->saveDatabase($username);
 	}
 
 	/**
@@ -127,8 +127,8 @@ class Alias extends PluginBase implements Listener{
 		$username = $player->getName();
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
+			$this->saveDatabase($username);
 		}
-		$this->saveDatabase($username);
 		foreach(array_keys($this->getAliases($player)) as $data){
 			if(in_array($data, (array)$this->getConfig()->get('data', []), true)){
 				if($this->getConfig()->get('alert', false)){
