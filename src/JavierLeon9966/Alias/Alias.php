@@ -5,9 +5,10 @@ use pocketmine\event\Listener;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\network\mcpe\protocol\LoginPacket;
-use pocketmine\utils\{TextFormat, Config};
+use pocketmine\utils\TextFormat;
 use pocketmine\Player;
 use JavierLeon9966\Alias\command\AliasCommand;
+use poggit\libasynql\libasynql;
 class Alias extends PluginBase implements Listener{
 	private $players = [];
 	private $database = null;
@@ -17,17 +18,54 @@ class Alias extends PluginBase implements Listener{
 	}
 	public function onLoad(): void{
 		self::$instance = $this;
-		$this->database = new Config("{$this->getDataFolder()}players.json");
-		$this->players = $this->database->getAll();
 		$this->saveDefaultConfig();
 	}
 	public function onEnable(): void{
+		$databaseConfig = (array)$this->getConfig()->get('database', []);
+		$friendlyConfig = [
+			'type' => $databaseConfig['type'] ?? 'sqlite3',
+			'sqlite' => [
+				'file' => $databaseConfig['sqlite']['file'] ?? 'players.sqlite'
+			],
+			'mysql' => [
+				'host' => $databaseConfig['mysql']['host'] ?? 127.0.0.1,
+				'username' => $databaseConfig['mysql']['username'] ?? 'Alias',
+				'password' => $databaseConfig['mysql']['password'] ?? 'mypassword123',
+				'schema' => $databaseConfig['mysql']['schema'] ?? 'Alias',
+				'port' => $databaseConfig['mysql']['port'] ?? 3306
+			],
+			'worker-limit' => $databaseConfig['worker-limit'] ?? 1
+		];
+		$this->database = libasynql::create($this, $friendlyConfig, [
+			'sqlite' => 'stmt.sql',
+			'mysql' => 'stmt.sql'
+		]);
+		$this->database->executeGeneric('alias.init');
+		$this->database->executeSelect('alias.load', [],
+			function(array $players): void{
+				foreach($players as $data){
+					$this->players[$data['Username']] = unserialize($data['Data']);
+				}
+			}
+		);
+
 		$this->getServer()->getCommandMap()->register('Alias', new AliasCommand($this));
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 	}
-	private function saveDatabase(): void{
-		$this->database->setAll($this->players);
-		$this->database->save();
+	public function onDisable(): void{
+		if(isset($this->database)){
+			$this->database->close();
+		}
+	}
+	private function saveDatabase(string $username): void{
+		$this->database->executeSelect('alias.search', ['username' => $username],
+			function(array $data) use($username): void{
+				$this->database->executeChange(count($data['Data']) > 0 ? 'alias.save' : 'alias.register', [
+					'username' => $username,
+					'data' => serialize($this->players[$username])
+				]);
+			}
+		);
 	}
 	public function getAliases(string $playerName): array{
 		$matchingPlayers = [];
@@ -77,7 +115,7 @@ class Alias extends PluginBase implements Listener{
 				}
 			}
 		}
-		$this->saveDatabase();
+		$this->saveDatabase($username);
 	}
 
 	/**
@@ -90,7 +128,7 @@ class Alias extends PluginBase implements Listener{
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
 		}
-		$this->saveDatabase();
+		$this->saveDatabase($username);
 		foreach(array_keys($this->getAliases($player)) as $data){
 			if(in_array($data, (array)$this->getConfig()->get('data', []), true)){
 				if($this->getConfig()->get('alert', false)){
@@ -101,7 +139,7 @@ class Alias extends PluginBase implements Listener{
 					}
 				}
 				if($this->getConfig()->get('mode', 'none') === 'ban'){
-					$player->kick(@(string)$this->getConfig()->get('ban', 'You are banned'), false);
+					$player->kick(@"{$this->getConfig()->get('ban', 'You are banned')}", false);
 				}
 				return;
 			}

@@ -4,5 +4,7 @@ branches:
 - stable
 projects:
   Alias:
-    path: ""
+    libs:
+      - src: poggit/libasynql/libasynql
+        version: ^3.3.1
 ...

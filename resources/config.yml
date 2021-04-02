@@ -1,4 +1,19 @@
 ---
+database:
+  # The database type. "sqlite" and "mysql" are supported.
+  type: sqlite
+
+  mysql:
+    host: 127.0.0.1
+    # Avoid using the "root" user for security reasons.
+    username: Alias
+    password: mypassword123
+    schema: Alias
+    port: 3306
+  # The maximum number of simultaneous SQL queries
+  # Recommended: 1 for sqlite, 2 for MySQL. You may want to further increase this value if your MySQL connection is very slow.
+  worker-limit: 1
+
 alert: false #Everyone that has alias.alerts permission
 ban: 'You are banned' #Ban message
 mode: none #Options: none, ban
