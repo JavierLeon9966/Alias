@@ -1,17 +1,18 @@
 <?php
 namespace JavierLeon9966\Alias;
-use pocketmine\plugin\PluginBase;
-use pocketmine\event\Listener;
+use JavierLeon9966\Alias\command\AliasCommand;
 use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
+use pocketmine\Player;
+use pocketmine\plugin\PluginBase;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\utils\TextFormat;
-use pocketmine\Player;
-use JavierLeon9966\Alias\command\AliasCommand;
 use poggit\libasynql\libasynql;
 class Alias extends PluginBase implements Listener{
-	private $players = [];
+	private $cache = [];
 	private $database = null;
+	private $players = [];
 	private static $instance = null;
 	public static function getInstance(): ?self{
 		return self::$instance;
@@ -19,9 +20,33 @@ class Alias extends PluginBase implements Listener{
 	public function onLoad(): void{
 		self::$instance = $this;
 		$this->saveDefaultConfig();
+		foreach([
+			'database' => 'array',
+			'database.type' => 'string',
+			'database.sqlite' => 'array',
+			'database.sqlite.file' => 'string',
+			'database.mysql' => 'array',
+			'database.mysql.host' => 'string',
+			'database.mysql.username' => 'string',
+			'database.mysql.password' => 'string',
+			'database.mysql.schema' => 'string',
+			'database.mysql.port' => 'integer',
+			'database.worker-limit' => 'integer',
+			'alert' => 'boolean',
+			'ban' => 'string',
+			'mode' => 'string',
+			'data' => 'array'
+		] as $option => $expectedType){
+			if(gettype($type = $this->getConfig()->getNested($option)) != $expectedType){
+				throw new \TypeError("Option ($option) must be of type $expectedType, $type was given in config.yml");
+			}
+		}
 	}
 	public function onEnable(): void{
-		$databaseConfig = (array)$this->getConfig()->get('database', []);
+		if(!class_exists(libasynql::class)){
+			throw new \Error('Virion \'libasynql\' not found. Please download Alias from Poggit-CI.');
+		}
+		$databaseConfig = $this->getConfig()->get('database', []);
 		$friendlyConfig = [
 			'type' => $databaseConfig['type'] ?? 'sqlite3',
 			'sqlite' => [
@@ -43,8 +68,8 @@ class Alias extends PluginBase implements Listener{
 		$this->database->executeGeneric('alias.init');
 		$this->database->executeSelect('alias.load', [],
 			function(array $players): void{
-				foreach($players as $data){
-					$this->players[$data['Username']] = unserialize($data['Data']);
+				foreach($players as $player){
+					$this->players[$player['Username']] = unserialize($player['Data']);
 				}
 			}
 		);
@@ -59,11 +84,13 @@ class Alias extends PluginBase implements Listener{
 	}
 	private function saveDatabase(string $username): void{
 		$this->database->executeSelect('alias.search', ['username' => $username],
-			function(array $data) use($username): void{
-				$this->database->executeChange(count($data['Data']) > 0 ? 'alias.save' : 'alias.register', [
-					'username' => $username,
-					'data' => serialize($this->players[$username])
-				]);
+			function(array $rows) use($username): void{
+				foreach($rows as $row){
+					$this->database->executeChange(isset($row['Data']) ? 'alias.save' : 'alias.register', [
+						'username' => $username,
+						'data' => serialize($this->players[$username])
+					]);
+				}
 			}
 		);
 	}
@@ -74,7 +101,7 @@ class Alias extends PluginBase implements Listener{
 		unset($players[$playerName]);
 		foreach($players as $name => $data){
 			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
-				foreach((array)($data[$key] ?? []) as $datum){
+				foreach($data[$key] ?? [] as $datum){
 					if(in_array($datum, (array)($playerData[$key] ?? []), true)){
 						$matchingPlayers[$key][] = $name;
 						continue 2;
@@ -96,25 +123,12 @@ class Alias extends PluginBase implements Listener{
 			if(!Player::isValidUserName($packet->username)){
 				return;
 			}
-			$username = TextFormat::clean($packet->username);
-			if(!is_array($this->players[$username] ?? null)){
-				$this->players[$username] = [];
-			}
-			if(!is_array($this->players[$username]['Address'] ?? null)){
-				$this->players[$username]['Address'] = [];
-			}
-			if(!in_array($player->getAddress(), $this->players[$username]['Address'], true)){
-				$this->players[$username]['Address'][] = $player->getAddress();
-			}
-			foreach(['ClientRandomId', 'DeviceId', 'SelfSignedId'] as $datum){
-				if(!is_array($this->players[$username][$datum] ?? null)){
-					$this->players[$username][$datum] = [];
-				}
-				if(!in_array($packet->clientData[$datum], $this->players[$username][$datum], true)){
-					$this->players[$username][$datum][] = $packet->clientData[$datum];
-				}
-			}
-			$this->saveDatabase($username);
+			$this->cache[TextFormat::clean($packet->username)] = [
+				'Address' => $player->getAddress(),
+				'ClientRandomId' => $packet->clientData['ClientRandomId'],
+				'DeviceId' => $packet->clientData['DeviceId'],
+				'SelfSignedId' => $packet->clientData['SelfSignedId']
+			];
 		}
 	}
 
@@ -125,12 +139,21 @@ class Alias extends PluginBase implements Listener{
 	public function onPlayerLogin(PlayerLoginEvent $event): void{
 		$player = $event->getPlayer();
 		$username = $player->getName();
+		if(isset($this->cache[$username])){
+			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId'] as $datum){
+				if(!in_array($this->cache[$username][$datum] ?? null, $this->players[$username][$datum] ?? [], true)){
+					$this->players[$username][$datum][] = $this->cache[$username][$datum];
+				}
+			}
+		}
+		unset($this->cache[$username]);
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
 			$this->saveDatabase($username);
 		}
-		foreach(array_keys($this->getAliases($player)) as $data){
-			if(in_array($data, (array)$this->getConfig()->get('data', []), true)){
+		$this->saveDatabase($username);
+		foreach(array_keys($this->getAliases($username)) as $data){
+			if(in_array($data, $this->getConfig()->get('data', []), true)){
 				if($this->getConfig()->get('alert', false)){
 					foreach($this->getServer()->getOnlinePlayers() as $user){
 						if($user->hasPermission('alias.alerts')){
@@ -138,8 +161,8 @@ class Alias extends PluginBase implements Listener{
 						}
 					}
 				}
-				if($this->getConfig()->get('mode', 'none') === 'ban'){
-					$player->kick(@"{$this->getConfig()->get('ban', 'You are banned')}", false);
+				if($this->getConfig()->get('mode', 'none') == 'ban'){
+					$player->kick($this->getConfig()->get('ban', 'You are banned'), false);
 				}
 				return;
 			}
