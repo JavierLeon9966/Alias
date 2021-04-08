@@ -4,16 +4,19 @@ use JavierLeon9966\Alias\command\AliasCommand;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
+use pocketmine\network\PacketHandlingException;
+use pocketmine\network\mcpe\{JwtException, JwtUtils};
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\libasynql;
+use poggit\libasynql\base\DataConnectorImpl;
 class Alias extends PluginBase implements Listener{
-	private $cache = [];
-	private $database = null;
-	private $players = [];
-	private static $instance = null;
+	private array $cache = [];
+	private array $players = [];
+	private ?DataConnectorImpl $database = null;
+	private static ?self $instance = null;
 	public static function getInstance(): ?self{
 		return self::$instance;
 	}
@@ -113,27 +116,36 @@ class Alias extends PluginBase implements Listener{
 	}
 
 	/**
-	 * @ignoreCancelled true
 	 * @priority MONITOR
 	 */
 	public function onDataPacketReceive(DataPacketReceiveEvent $event): void{
-		$player = $event->getPlayer();
+		$origin = $event->getOrigin();
 		$packet = $event->getPacket();
 		if($packet instanceof LoginPacket){
-			if(!Player::isValidUserName($packet->username)){
+			$chain = $packet->chainDataJwt->chain;
+			try{
+				$username = JwtUtils::parse($chain[array_key_last($chain)])[1]['extraData']['displayName'];
+			}catch(JwtException $e){
+				throw PacketHandlingException::wrap($e);
+			}
+			if(!Player::isValidUserName($username)){
 				return;
 			}
-			$this->cache[TextFormat::clean($packet->username)] = [
-				'Address' => $player->getAddress(),
-				'ClientRandomId' => $packet->clientData['ClientRandomId'],
-				'DeviceId' => $packet->clientData['DeviceId'],
-				'SelfSignedId' => $packet->clientData['SelfSignedId']
+			try{
+				$clientData = JwtUtils::parse($packet->clientDataJwt)[1];
+			}catch(JwtException $e){
+				throw PacketHandlingException::wrap($e);
+			}
+			$this->cache[TextFormat::clean($username)] = [
+				'Address' => $origin->getIp(),
+				'ClientRandomId' => $clientData['ClientRandomId'],
+				'DeviceId' => $clientData['DeviceId'],
+				'SelfSignedId' => $clientData['SelfSignedId']
 			];
 		}
 	}
 
 	/**
-	 * @ignoreCancelled true
 	 * @priority MONITOR
 	 */
 	public function onPlayerLogin(PlayerLoginEvent $event): void{
