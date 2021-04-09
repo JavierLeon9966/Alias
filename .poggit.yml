@@ -5,5 +5,7 @@ branches:
 - PM4
 projects:
   Alias:
-    path: ""
+    libs:
+      - src: JavierLeon9966/libasynql-4.0/libasynql
+        version: ^3.4.0
 ...
