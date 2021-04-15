@@ -2,7 +2,7 @@
 database:
   # The database type. "sqlite" and "mysql" are supported.
   type: sqlite
-
+  sqlite: []
   mysql:
     host: 127.0.0.1
     # Avoid using the "root" user for security reasons.

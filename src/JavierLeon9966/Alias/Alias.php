@@ -37,7 +37,7 @@ class Alias extends PluginBase implements Listener{
 			'mode' => 'string',
 			'data' => 'array'
 		] as $option => $expectedType){
-			if(gettype($type = $this->getConfig()->getNested($option)) != $expectedType){
+			if(($type = gettype($this->getConfig()->getNested($option))) != $expectedType){
 				throw new \TypeError("Option ($option) must be of type $expectedType, $type was given in config.yml");
 			}
 		}
