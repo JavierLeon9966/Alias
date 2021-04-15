@@ -101,7 +101,7 @@ class Alias extends PluginBase implements Listener{
 		unset($players[$playerName]);
 		foreach($players as $name => $data){
 			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
-				foreach((array)($data[$key] ?? [] as $datum)){
+				foreach((array)($data[$key]) ?? [] as $datum){
 					if(in_array($datum, (array)($playerData[$key] ?? []), true)){
 						$matchingPlayers[$key][] = $name;
 						continue 2;
