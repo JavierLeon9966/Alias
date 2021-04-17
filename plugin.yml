@@ -6,6 +6,8 @@ api: 4.0.0
 mcpe-protocol: [390, 407, 408, 419, 422, 428, 431]
 description: Detects players possible alternatives accounts
 website: https://github.com/JavierLeon9966/Alias
+extensions:
+  Core: '>=7.4'
 permissions:
   alias.command.alias:
     description: "Allows the user to see another player's possible accounts"
