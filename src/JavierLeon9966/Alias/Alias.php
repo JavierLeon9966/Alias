@@ -88,19 +88,19 @@ class Alias extends PluginBase implements Listener{
 	private function saveDatabase(string $username): void{
 		$this->database->executeSelect('alias.search', ['username' => $username],
 			function(array $rows) use($username): void{
-				foreach($rows as $row){
-					$this->database->executeChange(isset($row['Data']) ? 'alias.save' : 'alias.register', [
-						'username' => $username,
-						'data' => serialize($this->players[$username])
-					]);
-				}
+				$values = [
+					'username' => $username,
+					'data' => serialize($this->players[$username])
+				];
+				if(count($rows) > 0) $this->database->executeChange('alias.save', $values);
+				else $this->database->executeInsert('alias.register', $values);
 			}
 		);
 	}
 	public function getAliases(string $playerName): array{
 		$matchingPlayers = [];
 		$players = $this->players;
-		$playerData = $players[$playerName] ?? [];
+		$playerData = $players[strtolower($playerName)] ?? [];
 		unset($players[$playerName]);
 		foreach($players as $name => $data){
 			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
@@ -136,7 +136,7 @@ class Alias extends PluginBase implements Listener{
 			}catch(JwtException $e){
 				throw PacketHandlingException::wrap($e);
 			}
-			$this->cache[TextFormat::clean($username)] = [
+			$this->cache[strtolower(TextFormat::clean($username))] = [
 				'Address' => $origin->getIp(),
 				'ClientRandomId' => $clientData['ClientRandomId'],
 				'DeviceId' => $clientData['DeviceId'],
@@ -150,7 +150,7 @@ class Alias extends PluginBase implements Listener{
 	 */
 	public function onPlayerLogin(PlayerLoginEvent $event): void{
 		$player = $event->getPlayer();
-		$username = $player->getName();
+		$username = strtolower($player->getName());
 		if(isset($this->cache[$username])){
 			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId'] as $datum){
 				if(!in_array($this->cache[$username][$datum] ?? null, $this->players[$username][$datum] ?? [], true)){
@@ -161,7 +161,6 @@ class Alias extends PluginBase implements Listener{
 		unset($this->cache[$username]);
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
-			$this->saveDatabase($username);
 		}
 		$this->saveDatabase($username);
 		foreach(array_keys($this->getAliases($username)) as $data){
