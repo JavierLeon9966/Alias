@@ -1,19 +1,14 @@
 <?php
 namespace JavierLeon9966\Alias;
 use JavierLeon9966\Alias\command\AliasCommand;
-use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
-use pocketmine\network\PacketHandlingException;
-use pocketmine\network\mcpe\{JwtException, JwtUtils};
-use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\libasynql;
 use poggit\libasynql\base\DataConnectorImpl;
 class Alias extends PluginBase implements Listener{
-	private array $cache = [];
 	private array $players = [];
 	private ?DataConnectorImpl $database = null;
 	private static ?self $instance = null;
@@ -118,57 +113,28 @@ class Alias extends PluginBase implements Listener{
 	/**
 	 * @priority MONITOR
 	 */
-	public function onDataPacketReceive(DataPacketReceiveEvent $event): void{
-		$origin = $event->getOrigin();
-		$packet = $event->getPacket();
-		if($packet instanceof LoginPacket){
-			$chain = $packet->chainDataJwt->chain;
-			try{
-				$username = JwtUtils::parse($chain[array_key_last($chain)])[1]['extraData']['displayName'];
-			}catch(JwtException $e){
-				throw PacketHandlingException::wrap($e);
-			}
-			if(!Player::isValidUserName($username)){
-				return;
-			}
-			try{
-				$clientData = JwtUtils::parse($packet->clientDataJwt)[1];
-			}catch(JwtException $e){
-				throw PacketHandlingException::wrap($e);
-			}
-			$this->cache[strtolower(TextFormat::clean($username))] = [
-				'Address' => $origin->getIp(),
-				'ClientRandomId' => $clientData['ClientRandomId'],
-				'DeviceId' => $clientData['DeviceId'],
-				'SelfSignedId' => $clientData['SelfSignedId']
-			];
-		}
-	}
-
-	/**
-	 * @priority MONITOR
-	 */
 	public function onPlayerLogin(PlayerLoginEvent $event): void{
 		$player = $event->getPlayer();
 		$username = strtolower($player->getName());
-		if(isset($this->cache[$username])){
-			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId'] as $datum){
-				if(!in_array($this->cache[$username][$datum] ?? null, $this->players[$username][$datum] ?? [], true)){
-					$this->players[$username][$datum][] = $this->cache[$username][$datum];
-				}
-			}
+
+		$extraData = $player->getNetworkSession()->getPlayerInfo()->getExtraData();
+
+		$this->players[$username]['Address'][] = $player->getNetworkSession()->getIp();
+		foreach(['ClientRandomId', 'DeviceId', 'SelfSignedId'] as $data){
+			$this->players[$username][$data][] = $extraData[$data];
 		}
-		unset($this->cache[$username]);
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
 		}
+
 		$this->saveDatabase($username);
+
 		foreach(array_keys($this->getAliases($username)) as $data){
 			if(in_array($data, $this->getConfig()->get('data', []), true)){
 				if($this->getConfig()->get('alert', false)){
 					foreach($this->getServer()->getOnlinePlayers() as $user){
 						if($user->hasPermission('alias.alerts')){
-							$user->sendMessage(TextFormat::YELLOW.'[Alias] '.TextFormat::RED."'{$player->getName()}' has been detected using an alternative account");
+							$user->sendMessage(TextFormat::RED."'{$player->getName()}' has been detected using an alternative account");
 						}
 					}
 				}

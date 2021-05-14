@@ -4,7 +4,6 @@ use JavierLeon9966\Alias\Alias;
 use pocketmine\command\{Command, CommandSender, PluginIdentifiableCommand};
 use pocketmine\command\utils\InvalidCommandSyntaxException;
 use pocketmine\plugin\{Plugin, PluginOwned, PluginOwnedTrait};
-use pocketmine\lang\TranslationContainer;
 use pocketmine\utils\TextFormat;
 class AliasCommand extends Command implements PluginOwned{
 	use PluginOwnedTrait;
@@ -21,22 +20,17 @@ class AliasCommand extends Command implements PluginOwned{
 		if(!$this->testPermission($sender)){
 			return true;
 		}
+
 		if(count($args) == 0){
 			throw new InvalidCommandSyntaxException;
 		}
-		$player = $sender->getServer()->getPlayer($args[0]);
-		if($player === null){
-			$player = $sender->getServer()->getOfflinePlayer($args[0]);
-			if(!$player->hasPlayedBefore()){
-				$sender->sendMessage(new TranslationContainer(TextFormat::RED.'%commands.generic.player.notFound'));
-				return true;
-			}
-		}
-		$possiblePlayers = $this->getOwningPlugin()->getAliases($player->getName());
-		$sender->sendMessage(TextFormat::YELLOW.'[Alias] '.TextFormat::RESET."'{$player->getName()}' possible accounts:");
+
+		$message = TextFormat::GREEN."'$args[0]' possible accounts:";
+		$possiblePlayers = $this->getOwningPlugin()->getAliases($args[0]);
 		foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
-			$sender->sendMessage("$key: ".implode(', ', $possiblePlayers[$key] ?? ['None']));
+			$message .= "\n$key: ".implode(', ', $possiblePlayers[$key] ?? ['None']);
 		}
+		$sender->sendMessage($message);
 		return true;
 	}
 }
