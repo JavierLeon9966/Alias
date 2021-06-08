@@ -125,9 +125,9 @@ class Alias extends PluginBase implements Listener{
 			}
 			$this->cache[strtolower(TextFormat::clean($packet->username))] = [
 				'Address' => $player->getAddress(),
-				'ClientRandomId' => $packet->clientData['ClientRandomId'],
-				'DeviceId' => $packet->clientData['DeviceId'],
-				'SelfSignedId' => $packet->clientData['SelfSignedId']
+				'ClientRandomId' => $packet->clientData['ClientRandomId'] ?? null,
+				'DeviceId' => $packet->clientData['DeviceId'] ?? null,
+				'SelfSignedId' => $packet->clientData['SelfSignedId'] ?? null
 			];
 		}
 	}
