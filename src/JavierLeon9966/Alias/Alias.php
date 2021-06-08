@@ -119,9 +119,13 @@ class Alias extends PluginBase implements Listener{
 
 		$extraData = $player->getNetworkSession()->getPlayerInfo()->getExtraData();
 
-		$this->players[$username]['Address'][] = $player->getNetworkSession()->getIp();
+		if(!in_array($address = $player->getNetworkSession()->getIp(), $this->players[$username]['Address'], true)){
+			$this->players[$username]['Address'][] = $address;
+		}
 		foreach(['ClientRandomId', 'DeviceId', 'SelfSignedId'] as $data){
-			$this->players[$username][$data][] = $extraData[$data];
+			if(!in_array($extraData[$data], $this->players[$username][$data], true)){
+				$this->players[$username][$data][] = $extraData[$data];
+			}
 		}
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
