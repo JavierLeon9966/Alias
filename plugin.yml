@@ -1,9 +1,9 @@
 name: Alias
 main: JavierLeon9966\Alias\Alias
 author: Javier Leon9966
-version: 1.2.0
+version: 1.3.0
 api: [3.0.0-ALPHA12, 3.0.0]
-mcpe-protocol: [223, 261, 274, 282, 291, 313, 332, 340, 354, 361, 388, 389, 390, 407, 408, 419, 422, 428, 431, 440, 448, 465, 471]
+mcpe-protocol: [223, 261, 274, 282, 291, 313, 332, 340, 354, 361, 388, 389, 390, 407, 408, 419, 422, 428, 431, 440, 448, 465, 471, 475]
 description: Detects players possible alternatives accounts
 website: https://github.com/JavierLeon9966/Alias
 permissions:
