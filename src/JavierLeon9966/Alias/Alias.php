@@ -15,7 +15,7 @@ class Alias extends PluginBase implements Listener{
 	public static function getInstance(): ?self{
 		return self::$instance;
 	}
-	public function onLoad(): void{
+	public function onEnable(): void{
 		self::$instance = $this;
 		$this->saveDefaultConfig();
 		foreach([
@@ -36,13 +36,15 @@ class Alias extends PluginBase implements Listener{
 			'data' => 'array'
 		] as $option => $expectedType){
 			if(($type = gettype($this->getConfig()->getNested($option))) != $expectedType){
-				throw new \TypeError("Option ($option) must be of type $expectedType, $type was given in config.yml");
+				$this->getLogger()->error("Option ($option) must be of type $expectedType, $type was given in config.yml");
+				$this->getServer()->getPluginManager()->disablePlugin($this);
+				return;
 			}
 		}
-	}
-	public function onEnable(): void{
 		if(!class_exists(libasynql::class)){
-			throw new \Error('Virion \'libasynql\' not found. Please download Alias from Poggit-CI.');
+			$this->getLogger()->error('Virion \'libasynql\' not found. Please download Alias from Poggit-CI.');
+			$this->getServer()->getPluginManager()->disablePlugin($this);
+			return;
 		}
 		$databaseConfig = $this->getConfig()->get('database', []);
 		$friendlyConfig = [
