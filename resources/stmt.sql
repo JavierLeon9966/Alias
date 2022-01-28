@@ -7,11 +7,6 @@ CREATE TABLE IF NOT EXISTS Players(
   PRIMARY KEY(Username)
 );
 -- #  }
--- #  { search
-SELECT Data
-FROM Players
-WHERE Username=:username;
--- #  }
 -- #  { load
 SELECT * FROM Players;
 -- #  }
@@ -20,12 +15,5 @@ SELECT * FROM Players;
 -- #    :data string
 INSERT OR REPLACE INTO Players(Username, Data)
 VALUES (:username, :data);
--- #  }
--- #  { save
--- #    :username string
--- #    :data string
-UPDATE Players
-SET Data=:data
-WHERE Username=:username;
 -- #  }
 -- #}

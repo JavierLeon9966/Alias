@@ -83,16 +83,10 @@ class Alias extends PluginBase implements Listener{
 		}
 	}
 	private function saveDatabase(string $username): void{
-		$this->database->executeSelect('alias.search', ['username' => $username],
-			function(array $rows) use($username): void{
-				$values = [
-					'username' => $username,
-					'data' => serialize($this->players[$username])
-				];
-				if(count($rows) > 0) $this->database->executeChange('alias.save', $values);
-				else $this->database->executeInsert('alias.register', $values);
-			}
-		);
+		$this->database->executeInsert('alias.register', [
+			'username' => $username,
+			'data' => serialize($this->players[$username])
+		]);
 	}
 	public function getAliases(string $playerName): array{
 		$matchingPlayers = [];
