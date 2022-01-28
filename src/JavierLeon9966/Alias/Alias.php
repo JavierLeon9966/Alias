@@ -1,19 +1,17 @@
 <?php
 namespace JavierLeon9966\Alias;
 use JavierLeon9966\Alias\command\AliasCommand;
-use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
-use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\libasynql;
+use poggit\libasynql\base\DataConnectorImpl;
 class Alias extends PluginBase implements Listener{
-	private $cache = [];
-	private $database = null;
-	private $players = [];
-	private static $instance = null;
+	private array $players = [];
+	private ?DataConnectorImpl $database = null;
+	private static ?self $instance = null;
 	public static function getInstance(): ?self{
 		return self::$instance;
 	}
@@ -113,50 +111,34 @@ class Alias extends PluginBase implements Listener{
 	}
 
 	/**
-	 * @ignoreCancelled true
-	 * @priority MONITOR
-	 */
-	public function onDataPacketReceive(DataPacketReceiveEvent $event): void{
-		$player = $event->getPlayer();
-		$packet = $event->getPacket();
-		if($packet instanceof LoginPacket){
-			if(!Player::isValidUserName($packet->username)){
-				return;
-			}
-			$this->cache[strtolower(TextFormat::clean($packet->username))] = [
-				'Address' => $player->getAddress(),
-				'ClientRandomId' => $packet->clientData['ClientRandomId'] ?? null,
-				'DeviceId' => $packet->clientData['DeviceId'] ?? null,
-				'SelfSignedId' => $packet->clientData['SelfSignedId'] ?? null
-			];
-		}
-	}
-
-	/**
-	 * @ignoreCancelled true
 	 * @priority MONITOR
 	 */
 	public function onPlayerLogin(PlayerLoginEvent $event): void{
 		$player = $event->getPlayer();
-		$username = $player->getLowerCaseName();
-		if(isset($this->cache[$username])){
-			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId'] as $datum){
-				if(!in_array($this->cache[$username][$datum] ?? null, $this->players[$username][$datum] ?? [], true)){
-					$this->players[$username][$datum][] = $this->cache[$username][$datum];
-				}
+		$username = strtolower($player->getName());
+
+		$extraData = $player->getNetworkSession()->getPlayerInfo()->getExtraData();
+
+		if(!in_array($address = $player->getNetworkSession()->getIp(), $this->players[$username]['Address'], true)){
+			$this->players[$username]['Address'][] = $address;
+		}
+		foreach(['ClientRandomId', 'DeviceId', 'SelfSignedId'] as $data){
+			if(!in_array($extraData[$data], $this->players[$username][$data], true)){
+				$this->players[$username][$data][] = $extraData[$data];
 			}
 		}
-		unset($this->cache[$username]);
 		if($player->isAuthenticated()){
 			$this->players[$username]['XUID'] = $player->getXuid();
 		}
+
 		$this->saveDatabase($username);
+
 		foreach(array_keys($this->getAliases($username)) as $data){
 			if(in_array($data, $this->getConfig()->get('data', []), true)){
 				if($this->getConfig()->get('alert', false)){
 					foreach($this->getServer()->getOnlinePlayers() as $user){
 						if($user->hasPermission('alias.alerts')){
-							$user->sendMessage(TextFormat::YELLOW.'[Alias] '.TextFormat::RED."'{$player->getName()}' has been detected using an alternative account");
+							$user->sendMessage(TextFormat::RED."'{$player->getName()}' has been detected using an alternative account");
 						}
 					}
 				}
