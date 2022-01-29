@@ -8,6 +8,7 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\libasynql;
 use poggit\libasynql\base\DataConnectorImpl;
+use Webmozart\PathUtil\Path;
 class Alias extends PluginBase implements Listener{
 	private array $players = [];
 	private ?DataConnectorImpl $database = null;
@@ -62,8 +63,8 @@ class Alias extends PluginBase implements Listener{
 			'worker-limit' => $databaseConfig['worker-limit'] ?? 1
 		];
 		$this->database = libasynql::create($this, $friendlyConfig, [
-			'sqlite' => 'stmt.sql',
-			'mysql' => 'stmt.sql'
+			'sqlite' => Path::join('sqlite', 'stmt.sql'),
+			'mysql' => Path::join('mysql', 'stmt.sql')
 		]);
 		$this->database->executeGeneric('alias.init');
 		$this->database->executeSelect('alias.load', [],
