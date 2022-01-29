@@ -6,8 +6,7 @@ use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
-use poggit\libasynql\libasynql;
-use poggit\libasynql\base\DataConnector;
+use poggit\libasynql\{DataConnector, libasynql};
 use Webmozart\PathUtil\Path;
 class Alias extends PluginBase implements Listener{
 	private array $players = [];
