@@ -14,7 +14,7 @@ SELECT * FROM Players;
 -- #    :username string
 -- #    :data string
 INSERT INTO Players(Username, Data)
-VALUES (:username, :data);
-ON DUPLICATE KEY UPDATE Data = :data
+VALUES (:username, :data)
+ON DUPLICATE KEY UPDATE Data = :data;
 -- #  }
 -- #}
