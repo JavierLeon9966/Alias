@@ -24,9 +24,11 @@ class AliasCommand extends Command implements PluginOwned{
 		if(count($args) == 0){
 			throw new InvalidCommandSyntaxException;
 		}
-
+		if(!$this->owningPlugin instanceof Alias){
+			return;
+		}
 		$message = TextFormat::GREEN."'$args[0]' possible accounts:";
-		$possiblePlayers = $this->getOwningPlugin()->getAliases($args[0]);
+		$possiblePlayers = $this->owningPlugin->getAliases($args[0]);
 		foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
 			$message .= "\n$key: ".implode(', ', $possiblePlayers[$key] ?? ['None']);
 		}

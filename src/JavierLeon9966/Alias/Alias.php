@@ -11,7 +11,7 @@ use poggit\libasynql\base\DataConnectorImpl;
 use Webmozart\PathUtil\Path;
 class Alias extends PluginBase implements Listener{
 	private array $players = [];
-	private ?DataConnectorImpl $database = null;
+	private DataConnectorImpl $database;
 	private static ?self $instance = null;
 	public static function getInstance(): ?self{
 		return self::$instance;
