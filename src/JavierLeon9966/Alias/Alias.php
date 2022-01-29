@@ -119,7 +119,7 @@ class Alias extends PluginBase implements Listener{
 			$this->players[$username]['Address'][] = $address;
 		}
 		foreach(['ClientRandomId', 'DeviceId', 'SelfSignedId'] as $data){
-			if(!in_array($extraData[$data], $this->players[$username][$data] ?? [], true)){
+			if(isset($extraData[$data]) && !in_array($extraData[$data], $this->players[$username][$data] ?? [], true)){
 				$this->players[$username][$data][] = $extraData[$data];
 			}
 		}
