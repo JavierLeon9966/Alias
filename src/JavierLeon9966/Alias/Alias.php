@@ -89,9 +89,10 @@ class Alias extends PluginBase implements Listener{
 		]);
 	}
 	public function getAliases(string $playerName): array{
+		$playerName = strtolower($playerName);
 		$matchingPlayers = [];
 		$players = $this->players;
-		$playerData = $players[strtolower($playerName)] ?? [];
+		$playerData = $players[$playerName] ?? [];
 		unset($players[$playerName]);
 		foreach($players as $name => $data){
 			foreach(['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] as $key){
