@@ -7,11 +7,11 @@ use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\libasynql;
-use poggit\libasynql\base\DataConnectorImpl;
+use poggit\libasynql\base\DataConnector;
 use Webmozart\PathUtil\Path;
 class Alias extends PluginBase implements Listener{
 	private array $players = [];
-	private DataConnectorImpl $database;
+	private DataConnector $database;
 	private static ?self $instance = null;
 	public static function getInstance(): ?self{
 		return self::$instance;
