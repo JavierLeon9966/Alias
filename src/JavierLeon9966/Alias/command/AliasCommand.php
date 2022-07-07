@@ -1,12 +1,16 @@
 <?php
 namespace JavierLeon9966\Alias\command;
+
 use JavierLeon9966\Alias\Alias;
-use pocketmine\command\{Command, CommandSender, PluginIdentifiableCommand};
+use pocketmine\command\{Command, CommandSender};
 use pocketmine\command\utils\InvalidCommandSyntaxException;
-use pocketmine\plugin\{Plugin, PluginOwned, PluginOwnedTrait};
+use pocketmine\plugin\{PluginOwned, PluginOwnedTrait};
 use pocketmine\utils\TextFormat;
+
 class AliasCommand extends Command implements PluginOwned{
+
 	use PluginOwnedTrait;
+
 	public function __construct(Alias $plugin){
 		$this->owningPlugin = $plugin;
 		parent::__construct(
@@ -16,7 +20,9 @@ class AliasCommand extends Command implements PluginOwned{
 		);
 		$this->setPermission('alias.command.alias');
 	}
-	public function execute(CommandSender $sender, string $commandLabel, array $args){
+
+	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
+    {
 		if(!$this->testPermission($sender)){
 			return true;
 		}
@@ -25,7 +31,7 @@ class AliasCommand extends Command implements PluginOwned{
 			throw new InvalidCommandSyntaxException;
 		}
 		if(!$this->owningPlugin instanceof Alias){
-			return;
+			return false;
 		}
 		$message = TextFormat::GREEN."'$args[0]' possible accounts:";
 		$possiblePlayers = $this->owningPlugin->getAliases($args[0]);
