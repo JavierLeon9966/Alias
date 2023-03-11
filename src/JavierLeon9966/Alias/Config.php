@@ -19,5 +19,5 @@ class Config{
 	public string $mode = "none";
 	/** @var string[] $data */
 	#[Field]
-	public array $data = ['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'];
+	public array $data = ['Address', 'ClientRandomId', 'DeviceId', 'XUID'];
 }

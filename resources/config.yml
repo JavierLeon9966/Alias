@@ -15,8 +15,12 @@ database:
   # Recommended: 1 for sqlite, 2 for MySQL. You may want to further increase this value if your MySQL connection is very slow.
   worker-limit: 1
 
-alert: false #Everyone that has alias.alerts permission
-ban: 'You are banned' #Ban message
-mode: none #Options: none, ban
-data: ['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'] #Check for matching data in which will alert the staff members or ban the player
+# Everyone that has alias.alerts permission
+alert: false
+# Ban message
+ban: 'You are banned'
+# Options: none, ban
+mode: none
+# Check for matching data in which will alert the staff members and ban the player
+data: ['Address', 'ClientRandomId', 'DeviceId', 'XUID']
 ...

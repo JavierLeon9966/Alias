@@ -10,4 +10,8 @@ projects:
         version: ^4.0.0
       - src: sylvrs/libMarshal/libMarshal
         version: ^1.4.3
+      - src: SOF3/await-generator/await-generator
+        version: ^3.4.0
+      - src: SOF3/await-std/await-std
+        version: ^0.2.0
 ...
