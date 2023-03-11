@@ -20,4 +20,7 @@ class Config{
 	/** @var string[] $data */
 	#[Field]
 	public array $data = ['Address', 'ClientRandomId', 'DeviceId', 'XUID'];
+	/** @var string[] $save */
+	#[Field]
+	public array $save  = ['Address', 'XUID'];
 }

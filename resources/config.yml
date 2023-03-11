@@ -23,4 +23,7 @@ ban: 'You are banned'
 mode: none
 # Check for matching data in which will alert the staff members and ban the player
 data: ['Address', 'ClientRandomId', 'DeviceId', 'XUID']
+# Data that can be saved from a detected player, usually you would want to save the data that can't be spoofed, so it doesn't ban
+# innocent players, but you may also want to save legit players that attempt to ban evade.
+save: ['Address', 'XUID']
 ...
