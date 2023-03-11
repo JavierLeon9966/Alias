@@ -63,6 +63,16 @@ final class Alias extends PluginBase implements Listener{
 	 * @var Closure[] $checks
 	 */
 	private array $checks = [];
+	/**
+	 * @phpstan-var list<Closure(string $username, array{
+	 *     Address: string,
+	 *     ClientRandomId?: int,
+	 *     DeviceId?: string,
+	 *     XUID?: string
+	 * } $data): Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>> $saveData
+	 * @var Closure[] $saveData
+	 */
+	private array $saveData = [];
 
 	protected function onEnable(): void{
 		if(!trait_exists(MarshalTrait::class)){
@@ -112,6 +122,31 @@ final class Alias extends PluginBase implements Listener{
 			$this->checks[] = function(string $username, array $data): Generator{
 				$players = yield from $this->database->getPlayersMatchingXUIDFrom($username, $data['XUID'] ?? null);
 				return count($players) > 0;
+			};
+		}
+		$save = array_fill_keys($this->config->save, true);
+		if(isset($save['Address'])){
+			$this->saveData[] = fn(string $username, array $data) => yield from $this->database->addAddress($username, $data['Address']);
+		}
+		if(isset($save['ClientRandomId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['ClientRandomId'])){
+					yield from $this->database->addClientRandomId($username, $data['ClientRandomId']);
+				}
+			};
+		}
+		if(isset($save['DeviceId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['DeviceId'])){
+					yield from $this->database->addDeviceId($username, $data['DeviceId']);
+				}
+			};
+		}
+		if(isset($save['XUID'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['XUID'])){
+					yield from $this->database->addXuid($username, $data['XUID']);
+				}
 			};
 		}
 		$databaseConfig = $this->config->database ?? new DatabaseConfig;
@@ -279,7 +314,6 @@ final class Alias extends PluginBase implements Listener{
 		$holdingChan = new Channel();
 		Await::g2c(
 			$this->holdLoggedPlayer($player, $holdingChan),
-			/** @phpstan-ignore-next-line */
 			catches: [PacketHandlingException::class => static fn(PacketHandlingException $e) => throw $e]
 		);
 
@@ -340,6 +374,9 @@ final class Alias extends PluginBase implements Listener{
 			}
 
 			yield from $this->database->addKnownPlayer($username);
+			foreach($this->saveData as $saveDatum){
+				Await::g2c($saveDatum($username, $data));
+			}
 		});
 	}
 
