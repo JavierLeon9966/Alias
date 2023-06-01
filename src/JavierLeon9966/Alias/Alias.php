@@ -12,7 +12,7 @@ use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ConfigLoadException;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\{DataConnector, libasynql};
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 class Alias extends PluginBase implements Listener{
     /** @var array<string, array{
      *     "Address"?: list<string>,
