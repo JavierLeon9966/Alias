@@ -3,11 +3,10 @@ namespace JavierLeon9966\Alias;
 use JavierLeon9966\Alias\command\AliasCommand;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
-use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\{DataConnector, libasynql};
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 class Alias extends PluginBase implements Listener{
 	private array $players = [];
 	private DataConnector $database;
