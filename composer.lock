@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f6d8da59c6b6175dc733ccc371fe58a6",
+    "content-hash": "b7c132c999bfbcc78ac331254a98c9f1",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -1133,6 +1133,51 @@
                 "source": "https://github.com/poggit/libasynql/tree/pm5"
             },
             "time": "2023-05-26T02:59:23+00:00"
+        },
+        {
+            "name": "sylvrs/libmarshal",
+            "version": "1.4.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sylvrs/libMarshal.git",
+                "reference": "1428c74385e02a33985a99b23484605fa17cd418"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sylvrs/libMarshal/zipball/1428c74385e02a33985a99b23484605fa17cd418",
+                "reference": "1428c74385e02a33985a99b23484605fa17cd418",
+                "shasum": ""
+            },
+            "require": {
+                "ext-yaml": "*",
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.5.7",
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "libMarshal\\": "src/libMarshal"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "gpl-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Matthew Jordan",
+                    "email": "personal@matthewjordan.xyz"
+                }
+            ],
+            "description": "A library used for marshalling/unmarshalling data into objects",
+            "support": {
+                "issues": "https://github.com/sylvrs/libMarshal/issues",
+                "source": "https://github.com/sylvrs/libMarshal/tree/1.4.3"
+            },
+            "time": "2022-04-29T20:07:30+00:00"
         },
         {
             "name": "symfony/filesystem",
