@@ -2,7 +2,7 @@
   "name": "javierleon9966/alias",
   "description": "Detects players possible alternatives accounts",
   "type": "project",
-  "license": "GPL-3.0-only",
+  "license": "GPL-3.0-or-later",
   "require": {
     "pocketmine/pocketmine-mp": "^5.0.0",
     "sof3/libasynql": "dev-pm5",
