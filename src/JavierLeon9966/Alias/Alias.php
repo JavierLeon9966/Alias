@@ -37,7 +37,7 @@ class Alias extends PluginBase implements Listener{
 			$this->getLogger()->error($e->getMessage());
 			throw new DisablePluginException;
 		}
-		if(!class_exists(MarshalTrait::class)){
+		if(!trait_exists(MarshalTrait::class)){
 			$this->getLogger()->error('Virion \'libMarshal\' not found. Please download Alias from Poggit-CI.');
 			throw new DisablePluginException;
 		}
