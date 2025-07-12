@@ -13,6 +13,7 @@ final class SQLiteDatabase implements Database{
 		Await::g2c($this->queries->initAddress());
 		Await::g2c($this->queries->initClientRandomId());
 		Await::g2c($this->queries->initDeviceId());
+		Await::g2c($this->queries->initSelfSignedId());
 		Await::g2c($this->queries->initXuid());
 	}
 
@@ -42,6 +43,13 @@ final class SQLiteDatabase implements Database{
 	 */
 	public function addDeviceId(string $username, string $deviceId): Generator{
 		yield from $this->queries->addDeviceId($username, $deviceId);
+	}
+
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 */
+	public function addSelfSignedId(string $username, string $selfSignedId): Generator{
+		yield from $this->queries->addSelfSignedId($username, $selfSignedId);
 	}
 
 
@@ -83,6 +91,17 @@ final class SQLiteDatabase implements Database{
 		 * @phpstan-var array{Username: string} $rows
 		 */
 		$rows = yield from $this->queries->getAltDeviceId($username, $extraDeviceId);
+		return array_column($rows, 'Username');
+	}
+
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 */
+	public function getPlayersMatchingSelfSignedIdsFrom(string $username, ?string $extraSelfSignedId = null): Generator{
+		/**
+		 * @phpstan-var array{Username: string} $rows
+		 */
+		$rows = yield from $this->queries->getAltSelfSignedId($username, $extraSelfSignedId);
 		return array_column($rows, 'Username');
 	}
 

@@ -32,8 +32,16 @@ CREATE TABLE IF NOT EXISTS ClientRandomIds(
 -- #    { device_id
 CREATE TABLE IF NOT EXISTS DeviceIds(
     Username VARCHAR(16) NOT NULL,
-    DeviceId VARCHAR(32) NOT NULL,
+    DeviceId VARCHAR(36) NOT NULL,
     PRIMARY KEY (Username, DeviceId),
+    FOREIGN KEY (Username) REFERENCES KnownPlayers (Username) ON DELETE CASCADE
+);
+-- #    }
+-- #    { self_signed_id
+CREATE TABLE IF NOT EXISTS SelfSignedIds(
+    Username     VARCHAR(16) NOT NULL,
+    SelfSignedId VARCHAR(36) NOT NULL,
+    PRIMARY KEY (Username, SelfSignedId),
     FOREIGN KEY (Username) REFERENCES KnownPlayers (Username) ON DELETE CASCADE
 );
 -- #    }
@@ -74,6 +82,13 @@ SELECT DISTINCT Username
 FROM DeviceIds
 WHERE Username != LOWER(:username) AND (DeviceId IN (SELECT Username FROM DeviceIds WHERE Username = LOWER(:username)) OR DeviceId = :extraDeviceId);
 -- #    }
+-- #    { self_signed_id
+-- #      :username string
+-- #      :extraSelfSignedId ?string
+SELECT DISTINCT Username
+FROM SelfSignedIds
+WHERE Username != LOWER(:username) AND (SelfSignedId IN (SELECT Username FROM SelfSignedIds WHERE Username = LOWER(:username)) OR SelfSignedId = :extraSelfSignedId);
+-- #    }
 -- #    { xuid
 -- #      :username string
 -- #      :extraXuid ?string
@@ -104,6 +119,12 @@ VALUES (LOWER(:username), :clientRandomId);
 -- #      :deviceId string
 INSERT IGNORE INTO DeviceIds(Username, DeviceId)
 VALUES (LOWER(:username), :deviceId);
+-- #    }
+-- #    { self_signed_id
+-- #      :username string
+-- #      :selfSignedId string
+INSERT IGNORE INTO SelfSignedIds(Username, SelfSignedId)
+VALUES (LOWER(:username), :selfSignedId);
 -- #    }
 -- #    { xuid
 -- #      :username string

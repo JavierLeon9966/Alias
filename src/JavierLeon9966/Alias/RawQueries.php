@@ -18,8 +18,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:95
-	 * - resources/sqlite/stmt.sql:111
+	 * - ./resources/mysql/stmt.sql:110
+	 * - ./resources/sqlite/stmt.sql:130
 	 * @param string $username
 	 * @param string $address
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -31,8 +31,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:101
-	 * - resources/sqlite/stmt.sql:117
+	 * - ./resources/mysql/stmt.sql:116
+	 * - ./resources/sqlite/stmt.sql:136
 	 * @param string $username
 	 * @param int $clientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -44,8 +44,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:107
-	 * - resources/sqlite/stmt.sql:123
+	 * - ./resources/mysql/stmt.sql:122
+	 * - ./resources/sqlite/stmt.sql:142
 	 * @param string $username
 	 * @param string $deviceId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -57,8 +57,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:89
-	 * - resources/sqlite/stmt.sql:105
+	 * - ./resources/mysql/stmt.sql:104
+	 * - ./resources/sqlite/stmt.sql:124
 	 * @param string $username
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
@@ -69,8 +69,21 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:113
-	 * - resources/sqlite/stmt.sql:129
+	 * - ./resources/mysql/stmt.sql:128
+	 * - ./resources/sqlite/stmt.sql:148
+	 * @param string $username
+	 * @param string $selfSignedId
+	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
+	 */
+	public function addSelfSignedId(string $username, string $selfSignedId, ) : Generator {
+		$this->conn->executeInsert("alias.add.self_signed_id", ["username" => $username, "selfSignedId" => $selfSignedId, ], yield Await::RESOLVE, yield Await::REJECT);
+		return yield Await::ONCE;
+	}
+
+	/**
+	 * <h4>Declared in:</h4>
+	 * - ./resources/mysql/stmt.sql:134
+	 * - ./resources/sqlite/stmt.sql:154
 	 * @param string $username
 	 * @param string $xuid
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -82,8 +95,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:54
-	 * - resources/sqlite/stmt.sql:54
+	 * - ./resources/mysql/stmt.sql:62
+	 * - ./resources/sqlite/stmt.sql:62
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function deleteOldPlayers() : Generator {
@@ -93,8 +106,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:62
-	 * - resources/sqlite/stmt.sql:66
+	 * - ./resources/mysql/stmt.sql:70
+	 * - ./resources/sqlite/stmt.sql:74
 	 * @param string $username
 	 * @param ?string $extraAddress
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -106,8 +119,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:69
-	 * - resources/sqlite/stmt.sql:77
+	 * - ./resources/mysql/stmt.sql:77
+	 * - ./resources/sqlite/stmt.sql:85
 	 * @param string $username
 	 * @param ?int $extraClientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -119,8 +132,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:76
-	 * - resources/sqlite/stmt.sql:88
+	 * - ./resources/mysql/stmt.sql:84
+	 * - ./resources/sqlite/stmt.sql:96
 	 * @param string $username
 	 * @param ?string $extraDeviceId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -132,8 +145,21 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:83
-	 * - resources/sqlite/stmt.sql:99
+	 * - ./resources/mysql/stmt.sql:91
+	 * - ./resources/sqlite/stmt.sql:107
+	 * @param string $username
+	 * @param ?string $extraSelfSignedId
+	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
+	 */
+	public function getAltSelfSignedId(string $username, ?string $extraSelfSignedId, ) : Generator {
+		$this->conn->executeSelect("alias.get_alt.self_signed_id", ["username" => $username, "extraSelfSignedId" => $extraSelfSignedId, ], yield Await::RESOLVE, yield Await::REJECT);
+		return yield Await::ONCE;
+	}
+
+	/**
+	 * <h4>Declared in:</h4>
+	 * - ./resources/mysql/stmt.sql:98
+	 * - ./resources/sqlite/stmt.sql:118
 	 * @param string $username
 	 * @param ?string $extraXuid
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -145,8 +171,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:23
-	 * - resources/sqlite/stmt.sql:23
+	 * - ./resources/mysql/stmt.sql:23
+	 * - ./resources/sqlite/stmt.sql:23
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initAddress() : Generator {
@@ -156,8 +182,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:31
-	 * - resources/sqlite/stmt.sql:31
+	 * - ./resources/mysql/stmt.sql:31
+	 * - ./resources/sqlite/stmt.sql:31
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initClientRandomId() : Generator {
@@ -167,8 +193,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:39
-	 * - resources/sqlite/stmt.sql:39
+	 * - ./resources/mysql/stmt.sql:39
+	 * - ./resources/sqlite/stmt.sql:39
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initDeviceId() : Generator {
@@ -178,8 +204,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:15
-	 * - resources/sqlite/stmt.sql:15
+	 * - ./resources/mysql/stmt.sql:15
+	 * - ./resources/sqlite/stmt.sql:15
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initKnownPlayers() : Generator {
@@ -189,8 +215,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:10
-	 * - resources/sqlite/stmt.sql:10
+	 * - ./resources/mysql/stmt.sql:10
+	 * - ./resources/sqlite/stmt.sql:10
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initOldPlayers() : Generator {
@@ -200,8 +226,19 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:46
-	 * - resources/sqlite/stmt.sql:46
+	 * - ./resources/mysql/stmt.sql:47
+	 * - ./resources/sqlite/stmt.sql:47
+	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
+	 */
+	public function initSelfSignedId() : Generator {
+		$this->conn->executeChange("alias.init.self_signed_id", [], yield Await::RESOLVE, yield Await::REJECT);
+		return yield Await::ONCE;
+	}
+
+	/**
+	 * <h4>Declared in:</h4>
+	 * - ./resources/mysql/stmt.sql:54
+	 * - ./resources/sqlite/stmt.sql:54
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initXuid() : Generator {
@@ -211,8 +248,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - resources/mysql/stmt.sql:51
-	 * - resources/sqlite/stmt.sql:51
+	 * - ./resources/mysql/stmt.sql:59
+	 * - ./resources/sqlite/stmt.sql:59
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
 	 */
 	public function loadOldPlayers() : Generator {

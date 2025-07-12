@@ -59,7 +59,8 @@ final class Alias extends PluginBase implements Listener{
 	 *     Address: string,
 	 *     ClientRandomId?: int,
 	 *     DeviceId?: string,
-	 *     XUID?: string
+	 *     XUID?: string,
+	 *     SelfSignedId?: string
 	 * } $data): Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, bool>> $checks
 	 * @var Closure[] $checks
 	 */
@@ -69,7 +70,8 @@ final class Alias extends PluginBase implements Listener{
 	 *     Address: string,
 	 *     ClientRandomId?: int,
 	 *     DeviceId?: string,
-	 *     XUID?: string
+	 *     XUID?: string,
+	 *     SelfSignedId?: string
 	 * } $data): Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>> $saveData
 	 * @var Closure[] $saveData
 	 */
@@ -118,6 +120,12 @@ final class Alias extends PluginBase implements Listener{
 				return count($players) > 0;
 			};
 		}
+		if(isset($checks['SelfSignedId'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$players = yield from $this->database->getPlayersMatchingSelfSignedIdsFrom($username, $data['SelfSignedId'] ?? null);
+				return count($players) > 0;
+			};
+		}
 		if(isset($checks['XUID'])){
 			$this->checks[] = function(string $username, array $data): Generator{
 				$players = yield from $this->database->getPlayersMatchingXUIDFrom($username, $data['XUID'] ?? null);
@@ -139,6 +147,13 @@ final class Alias extends PluginBase implements Listener{
 			$this->saveData[] = function(string $username, array $data): Generator{
 				if(isset($data['DeviceId'])){
 					yield from $this->database->addDeviceId($username, $data['DeviceId']);
+				}
+			};
+		}
+		if(isset($save['SelfSignedId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['SelfSignedId'])){
+					yield from $this->database->addSelfSignedId($username, $data['SelfSignedId']);
 				}
 			};
 		}
@@ -320,13 +335,14 @@ final class Alias extends PluginBase implements Listener{
 		);
 
 		$username = $player->getName();
-		/** @var array{ClientRandomId?: int, DeviceId?: string} $clientData */
+		/** @var array{ClientRandomId?: int, DeviceId?: string, SelfSignedId?: string} $clientData */
 		$clientData = $player->getPlayerInfo()->getExtraData();
 		/**
 		 * @phpstan-var array{
 		 *     Address: string,
 		 *     ClientRandomId?: int,
 		 *     DeviceId?: string,
+		 *     SelfSignedId?: string,
 		 *     XUID?: string
 		 * } $data
 		 */
@@ -337,6 +353,9 @@ final class Alias extends PluginBase implements Listener{
 		}
 		if(($deviceId = $clientData['DeviceId'] ?? null) !== null){
 			$data['DeviceId'] = $deviceId;
+		}
+		if(($selfSignedId = $clientData['SelfSignedId'] ?? null) !== null){
+			$data['SelfSignedId'] = $selfSignedId;
 		}
 		if(($xuid = $player->getXuid()) !== ''){
 			$data['XUID'] = $xuid;
@@ -421,7 +440,7 @@ final class Alias extends PluginBase implements Listener{
 			if($which === 1){
 				throw new PacketHandlingException('There shouldn\'t be a RequestChunkRadiusPacket after another');
 			}
-			$serializer = PacketSerializer::encoder($session->getPacketSerializerContext());
+			$serializer = PacketSerializer::encoder();
 			$packet->encode($serializer);
 			$session->handleDataPacket($packet, $serializer->getBuffer());
 		}catch(Throwable $e){

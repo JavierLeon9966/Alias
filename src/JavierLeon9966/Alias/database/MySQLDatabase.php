@@ -9,12 +9,13 @@ use SOFe\AwaitGenerator\Loading;
 use SOFe\AwaitGenerator\Mutex;
 
 final class MySQLDatabase implements Database{
-	private Mutex $addressMu, $clientRandomIdMu, $deviceIdMu, $xuidMu;
+	private Mutex $addressMu, $clientRandomIdMu, $deviceIdMu, $selfSignedIdMu, $xuidMu;
 
 	public function __construct(private RawQueries $queries){
 		$this->addressMu = new Mutex();
 		$this->clientRandomIdMu = new Mutex();
 		$this->deviceIdMu = new Mutex();
+		$this->selfSignedIdMu = new Mutex();
 		$this->xuidMu = new Mutex();
 
 		$load = new Loading(fn() => yield from $this->queries->initKnownPlayers());
@@ -30,6 +31,10 @@ final class MySQLDatabase implements Database{
 			yield from $load->get();
 			yield from $this->queries->initDeviceId();
 		}));
+		Await::g2c($this->selfSignedIdMu->runClosure(function() use($load): Generator{
+			yield from $load->get();
+			yield from $this->queries->initSelfSignedId();
+		}));
 		Await::g2c($this->xuidMu->runClosure(function() use($load): Generator{
 			yield from $load->get();
 			yield from $this->queries->initXuid();
@@ -43,6 +48,7 @@ final class MySQLDatabase implements Database{
 		Await::g2c($this->addressMu->runClosure(static fn() => yield from $load->get()));
 		Await::g2c($this->clientRandomIdMu->runClosure(static fn() => yield from $load->get()));
 		Await::g2c($this->deviceIdMu->runClosure(static fn() => yield from $load->get()));
+		Await::g2c($this->selfSignedIdMu->runClosure(static fn() => yield from $load->get()));
 		Await::g2c($this->xuidMu->runClosure(static fn() => yield from $load->get()));
 		yield from $load->get();
 	}
@@ -66,6 +72,13 @@ final class MySQLDatabase implements Database{
 	 */
 	public function addDeviceId(string $username, string $deviceId): Generator{
 		yield from $this->deviceIdMu->run($this->queries->addDeviceId($username, $deviceId));
+	}
+
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 */
+	public function addSelfSignedId(string $username, string $selfSignedId): Generator{
+		yield from $this->selfSignedIdMu->run($this->queries->addSelfSignedId($username, $selfSignedId));
 	}
 
 
@@ -107,6 +120,17 @@ final class MySQLDatabase implements Database{
 		 * @phpstan-var array{Username: string} $rows
 		 */
 		$rows = yield from $this->deviceIdMu->run($this->queries->getAltDeviceId($username, $extraDeviceId));
+		return array_column($rows, 'Username');
+	}
+
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 */
+	public function getPlayersMatchingSelfSignedIdsFrom(string $username, ?string $extraSelfSignedId = null): Generator{
+		/**
+		 * @phpstan-var array{Username: string} $rows
+		 */
+		$rows = yield from $this->selfSignedIdMu->run($this->queries->getAltSelfSignedId($username, $extraSelfSignedId));
 		return array_column($rows, 'Username');
 	}
 

@@ -26,6 +26,11 @@ interface Database{
 	 */
 	public function addDeviceId(string $username, string $deviceId): Generator;
 
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 */
+	public function addSelfSignedId(string $username, string $selfSignedId): Generator;
+
 
 	/**
 	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
@@ -47,6 +52,11 @@ interface Database{
 	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
 	 */
 	public function getPlayersMatchingDeviceIdsFrom(string $username, ?string $extraDeviceId = null): Generator;
+
+	/**
+	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 */
+	public function getPlayersMatchingSelfSignedIdsFrom(string $username, ?string $extraSelfSignedId = null): Generator;
 
 	/**
 	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
