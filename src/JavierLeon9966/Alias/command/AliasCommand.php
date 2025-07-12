@@ -37,11 +37,12 @@ class AliasCommand extends Command implements PluginOwned{
 			if(!$this->owningPlugin instanceof Alias){
 				return;
 			}
-			$database = $this->owningPlugin->getDatabase();
+			$database = yield from $this->owningPlugin->getDatabase();
 			$detected = yield from Await::all([
 				'Address' => $database->getPlayersMatchingAddressesFrom($args[0]),
 				'ClientRandomId' => $database->getPlayersMatchingClientRandomIdsFrom($args[0]),
 				'DeviceId' => $database->getPlayersMatchingDeviceIdsFrom($args[0]),
+				'SelfSignedId' => $database->getPlayersMatchingSelfSignedIdsFrom($args[0]),
 				'XUID' => $database->getPlayersMatchingXUIDFrom($args[0])
 			]);
 			$message = '';

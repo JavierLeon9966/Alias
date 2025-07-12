@@ -9,8 +9,6 @@ use Generator;
 use JavierLeon9966\Alias\command\AliasCommand;
 use JavierLeon9966\Alias\config\DatabaseConfig;
 use JavierLeon9966\Alias\database\Database;
-use JavierLeon9966\Alias\database\MySQLDatabase;
-use JavierLeon9966\Alias\database\SQLiteDatabase;
 use libMarshal\exception\GeneralMarshalException;
 use libMarshal\exception\UnmarshalException;
 use libMarshal\MarshalTrait;
@@ -40,6 +38,7 @@ use poggit\libasynql\SqlError;
 use Ramsey\Uuid\Uuid;
 use SOFe\AwaitGenerator\Await;
 use SOFe\AwaitGenerator\Channel;
+use SOFe\AwaitGenerator\Loading;
 use SOFe\PmEvent\Events;
 use Symfony\Component\Filesystem\Path;
 use Throwable;
@@ -52,7 +51,8 @@ final class Alias extends PluginBase implements Listener{
 	}
 
 	private DataConnector $connector;
-	private Database $database;
+	/** @var \SOFe\AwaitGenerator\Loading<Database> */
+	private Loading $database;
 	private Config $config;
 	/**
 	 * @phpstan-var list<Closure(string $username, array{
@@ -101,69 +101,6 @@ final class Alias extends PluginBase implements Listener{
 			$this->getLogger()->error($e->getMessage());
 			throw new DisablePluginException;
 		}
-		$checks = array_fill_keys($this->config->data, true);
-		if(isset($checks['Address'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$players = yield from $this->database->getPlayersMatchingAddressesFrom($username, $data['Address']);
-				return count($players) > 0;
-			};
-		}
-		if(isset($checks['ClientRandomId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$players = yield from $this->database->getPlayersMatchingClientRandomIdsFrom($username, $data['ClientRandomId'] ?? null);
-				return count($players) > 0;
-			};
-		}
-		if(isset($checks['DeviceId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$players = yield from $this->database->getPlayersMatchingDeviceIdsFrom($username, $data['DeviceId'] ?? null);
-				return count($players) > 0;
-			};
-		}
-		if(isset($checks['SelfSignedId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$players = yield from $this->database->getPlayersMatchingSelfSignedIdsFrom($username, $data['SelfSignedId'] ?? null);
-				return count($players) > 0;
-			};
-		}
-		if(isset($checks['XUID'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$players = yield from $this->database->getPlayersMatchingXUIDFrom($username, $data['XUID'] ?? null);
-				return count($players) > 0;
-			};
-		}
-		$save = array_fill_keys($this->config->save, true);
-		if(isset($save['Address'])){
-			$this->saveData[] = fn(string $username, array $data) => yield from $this->database->addAddress($username, $data['Address']);
-		}
-		if(isset($save['ClientRandomId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['ClientRandomId'])){
-					yield from $this->database->addClientRandomId($username, $data['ClientRandomId']);
-				}
-			};
-		}
-		if(isset($save['DeviceId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['DeviceId'])){
-					yield from $this->database->addDeviceId($username, $data['DeviceId']);
-				}
-			};
-		}
-		if(isset($save['SelfSignedId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['SelfSignedId'])){
-					yield from $this->database->addSelfSignedId($username, $data['SelfSignedId']);
-				}
-			};
-		}
-		if(isset($save['XUID'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['XUID'])){
-					yield from $this->database->addXuid($username, $data['XUID']);
-				}
-			};
-		}
 		$databaseConfig = $this->config->database ?? new DatabaseConfig;
 		$friendlyConfig = [
 			'type' => $databaseConfig->type,
@@ -189,11 +126,84 @@ final class Alias extends PluginBase implements Listener{
 			throw new DisablePluginException();
 		}
 		$queries = new RawQueries($this->connector);
-		$this->database = match($this->config->database->type){
-			SqlDialect::MYSQL => new MySQLDatabase($queries),
-			SqlDialect::SQLITE => new SQLiteDatabase($queries),
-			default => throw new AssumptionFailedError('Unreachable')
-		};
+		$this->database = new Loading(function() use($queries): Generator{
+			return yield from Database::create($queries);
+		});
+		$checks = array_fill_keys($this->config->data, true);
+		if(isset($checks['Address'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$database = $players = yield from $this->database->get();
+				yield from $database->getPlayersMatchingAddressesFrom($username, $data['Address']);
+				return count($players) > 0;
+			};
+		}
+		if(isset($checks['ClientRandomId'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$database = $players = yield from $this->database->get();
+				yield from $database->getPlayersMatchingClientRandomIdsFrom($username, $data['ClientRandomId'] ?? null);
+				return count($players) > 0;
+			};
+		}
+		if(isset($checks['DeviceId'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$database = $players = yield from $this->database->get();
+				yield from $database->getPlayersMatchingDeviceIdsFrom($username, $data['DeviceId'] ?? null);
+				return count($players) > 0;
+			};
+		}
+		if(isset($checks['SelfSignedId'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$database = $players = yield from $this->database->get();
+				yield from $database->getPlayersMatchingSelfSignedIdsFrom($username, $data['SelfSignedId'] ?? null);
+				return count($players) > 0;
+			};
+		}
+		if(isset($checks['XUID'])){
+			$this->checks[] = function(string $username, array $data): Generator{
+				$database = $players = yield from $this->database->get();
+				yield from $database->getPlayersMatchingXUIDFrom($username, $data['XUID'] ?? null);
+				return count($players) > 0;
+			};
+		}
+		$save = array_fill_keys($this->config->save, true);
+		if(isset($save['Address'])){
+			$this->saveData[] = function(string $username, array $data){
+				$database = yield from $this->database->get();
+				yield from $database->addAddress($username, $data['Address']);
+			};
+		}
+		if(isset($save['ClientRandomId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['ClientRandomId'])){
+					$database = yield from $this->database->get();
+					yield from $database->addClientRandomId($username, $data['ClientRandomId']);
+				}
+			};
+		}
+		if(isset($save['DeviceId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['DeviceId'])){
+					$database = yield from $this->database->get();
+					yield from $database->addDeviceId($username, $data['DeviceId']);
+				}
+			};
+		}
+		if(isset($save['SelfSignedId'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['SelfSignedId'])){
+					$database = yield from $this->database->get();
+					yield from $database->addSelfSignedId($username, $data['SelfSignedId']);
+				}
+			};
+		}
+		if(isset($save['XUID'])){
+			$this->saveData[] = function(string $username, array $data): Generator{
+				if(isset($data['XUID'])){
+					$database = yield from $this->database->get();
+					yield from $database->addXuid($username, $data['XUID']);
+				}
+			};
+		}
 		//TODO: Add data encryption
 		Await::f2c(function() use($queries): Generator{
 			try{
@@ -223,15 +233,16 @@ final class Alias extends PluginBase implements Listener{
 			 */
 			$savePlayer = function(array $data, string $username): Generator{
 				$gens = [];
+				$database = yield from $this->database->get();
 				foreach($data['Address'] as $address){
-					$gens[] = $this->database->addAddress($username, $address);
+					$gens[] = $database->addAddress($username, $address);
 				}
 				foreach($data['ClientRandomId'] ?? [] as $clientRandomId){
 					if(!is_int($clientRandomId)){
 						$this->getLogger()->error("Data migration error: Expected an integer ClientRandomId from $username, got: " . (is_scalar($clientRandomId) ? $clientRandomId : get_debug_type($clientRandomId)));
 						continue;
 					}
-					$gens[] = $this->database->addClientRandomId($username, $clientRandomId);
+					$gens[] = $database->addClientRandomId($username, $clientRandomId);
 				}
 				foreach($data['DeviceId'] ?? [] as $deviceId){
 					if(!is_string($deviceId)){
@@ -255,11 +266,11 @@ final class Alias extends PluginBase implements Listener{
 						$this->getLogger()->error("Data migration error: Expected a valid UUID DeviceId from $username, got: $deviceId");
 						continue;
 					}
-					$gens[] = $this->database->addDeviceId($username, $deviceId);
+					$gens[] = $database->addDeviceId($username, $deviceId);
 				}
 				// SelfSignedId is useless because it is just hash(username + client random id), but it should be verified by the server to prevent spoofing
 				if(($xuid = $data['XUID'] ?? null) !== null){
-					$gens[] = $this->database->addXuid($username, $xuid);
+					$gens[] = $database->addXuid($username, $xuid);
 				}
 				yield from Await::all($gens);
 			};
@@ -291,8 +302,9 @@ final class Alias extends PluginBase implements Listener{
 		}
 	}
 
-	public function getDatabase(): Database{
-		return $this->database;
+	/** @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, \JavierLeon9966\Alias\database\Database> */
+	public function getDatabase(): Generator{
+		return yield from $this->database->get();
 	}
 
 	/**
@@ -376,15 +388,16 @@ final class Alias extends PluginBase implements Listener{
 			$detected = yield from $this->isPlayerDetected($username, $data);
 			$holdingChan->sendWithoutWait(true);
 			if(!$detected){
-				Await::g2c($this->database->addAddress($username, $data['Address']));
+				$database = yield from $this->database->get();
+				Await::g2c($database->addAddress($username, $data['Address']));
 				if(isset($data['ClientRandomId'])){
-					Await::g2c($this->database->addClientRandomId($username, $data['ClientRandomId']));
+					Await::g2c($database->addClientRandomId($username, $data['ClientRandomId']));
 				}
 				if(isset($data['DeviceId'])){
-					Await::g2c($this->database->addDeviceId($username, $data['DeviceId']));
+					Await::g2c($database->addDeviceId($username, $data['DeviceId']));
 				}
 				if(isset($data['XUID'])){
-					Await::g2c($this->database->addXuid($username, $data['XUID']));
+					Await::g2c($database->addXuid($username, $data['XUID']));
 				}
 				return;
 			}
