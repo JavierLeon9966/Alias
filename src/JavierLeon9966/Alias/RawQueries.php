@@ -18,8 +18,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:110
-	 * - ./resources/sqlite/stmt.sql:130
+	 * - ./resources/mysql/stmt.sql:103
+	 * - ./resources/sqlite/stmt.sql:123
 	 * @param string $username
 	 * @param string $address
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -31,8 +31,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:116
-	 * - ./resources/sqlite/stmt.sql:136
+	 * - ./resources/mysql/stmt.sql:109
+	 * - ./resources/sqlite/stmt.sql:129
 	 * @param string $username
 	 * @param int $clientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -44,8 +44,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:122
-	 * - ./resources/sqlite/stmt.sql:142
+	 * - ./resources/mysql/stmt.sql:115
+	 * - ./resources/sqlite/stmt.sql:135
 	 * @param string $username
 	 * @param string $deviceId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -57,8 +57,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:104
-	 * - ./resources/sqlite/stmt.sql:124
+	 * - ./resources/mysql/stmt.sql:97
+	 * - ./resources/sqlite/stmt.sql:117
 	 * @param string $username
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
@@ -69,8 +69,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:128
-	 * - ./resources/sqlite/stmt.sql:148
+	 * - ./resources/mysql/stmt.sql:121
+	 * - ./resources/sqlite/stmt.sql:141
 	 * @param string $username
 	 * @param string $selfSignedId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -82,8 +82,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:134
-	 * - ./resources/sqlite/stmt.sql:154
+	 * - ./resources/mysql/stmt.sql:127
+	 * - ./resources/sqlite/stmt.sql:147
 	 * @param string $username
 	 * @param string $xuid
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
@@ -95,8 +95,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:62
-	 * - ./resources/sqlite/stmt.sql:62
+	 * - ./resources/mysql/stmt.sql:55
+	 * - ./resources/sqlite/stmt.sql:55
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function deleteOldPlayers() : Generator {
@@ -106,8 +106,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:70
-	 * - ./resources/sqlite/stmt.sql:74
+	 * - ./resources/mysql/stmt.sql:63
+	 * - ./resources/sqlite/stmt.sql:67
 	 * @param string $username
 	 * @param ?string $extraAddress
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -119,8 +119,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:77
-	 * - ./resources/sqlite/stmt.sql:85
+	 * - ./resources/mysql/stmt.sql:70
+	 * - ./resources/sqlite/stmt.sql:78
 	 * @param string $username
 	 * @param ?int $extraClientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -132,8 +132,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:84
-	 * - ./resources/sqlite/stmt.sql:96
+	 * - ./resources/mysql/stmt.sql:77
+	 * - ./resources/sqlite/stmt.sql:89
 	 * @param string $username
 	 * @param ?string $extraDeviceId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -145,8 +145,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:91
-	 * - ./resources/sqlite/stmt.sql:107
+	 * - ./resources/mysql/stmt.sql:84
+	 * - ./resources/sqlite/stmt.sql:100
 	 * @param string $username
 	 * @param ?string $extraSelfSignedId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -158,8 +158,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:98
-	 * - ./resources/sqlite/stmt.sql:118
+	 * - ./resources/mysql/stmt.sql:91
+	 * - ./resources/sqlite/stmt.sql:111
 	 * @param string $username
 	 * @param ?string $extraXuid
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
@@ -171,8 +171,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:23
-	 * - ./resources/sqlite/stmt.sql:23
+	 * - ./resources/mysql/stmt.sql:16
+	 * - ./resources/sqlite/stmt.sql:16
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initAddress() : Generator {
@@ -182,8 +182,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:31
-	 * - ./resources/sqlite/stmt.sql:31
+	 * - ./resources/mysql/stmt.sql:24
+	 * - ./resources/sqlite/stmt.sql:24
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initClientRandomId() : Generator {
@@ -193,8 +193,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:39
-	 * - ./resources/sqlite/stmt.sql:39
+	 * - ./resources/mysql/stmt.sql:32
+	 * - ./resources/sqlite/stmt.sql:32
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initDeviceId() : Generator {
@@ -204,8 +204,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:15
-	 * - ./resources/sqlite/stmt.sql:15
+	 * - ./resources/mysql/stmt.sql:8
+	 * - ./resources/sqlite/stmt.sql:8
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initKnownPlayers() : Generator {
@@ -215,19 +215,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:10
-	 * - ./resources/sqlite/stmt.sql:10
-	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
-	 */
-	public function initOldPlayers() : Generator {
-		$this->conn->executeChange("alias.init.old_players", [], yield Await::RESOLVE, yield Await::REJECT);
-		return yield Await::ONCE;
-	}
-
-	/**
-	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:47
-	 * - ./resources/sqlite/stmt.sql:47
+	 * - ./resources/mysql/stmt.sql:40
+	 * - ./resources/sqlite/stmt.sql:40
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initSelfSignedId() : Generator {
@@ -237,8 +226,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:54
-	 * - ./resources/sqlite/stmt.sql:54
+	 * - ./resources/mysql/stmt.sql:47
+	 * - ./resources/sqlite/stmt.sql:47
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
 	public function initXuid() : Generator {
@@ -248,8 +237,8 @@ final class RawQueries{
 
 	/**
 	 * <h4>Declared in:</h4>
-	 * - ./resources/mysql/stmt.sql:59
-	 * - ./resources/sqlite/stmt.sql:59
+	 * - ./resources/mysql/stmt.sql:52
+	 * - ./resources/sqlite/stmt.sql:52
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
 	 */
 	public function loadOldPlayers() : Generator {

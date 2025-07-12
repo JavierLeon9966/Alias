@@ -196,9 +196,17 @@ final class Alias extends PluginBase implements Listener{
 		};
 		//TODO: Add data encryption
 		Await::f2c(function() use($queries): Generator{
-			yield from $queries->initOldPlayers();
-			/** @var list<array{'Username': string, 'Data': string}> $rows */
-			$rows = yield from $queries->loadOldPlayers();
+			try{
+				/** @var list<array{'Username': string, 'Data': string}> $rows */
+				$rows = yield from $queries->loadOldPlayers();
+			}catch(SqlError $e){
+				$msg = strtolower($e->getMessage());
+				if(str_contains($msg, 'no such table') || preg_match('/^table [^ ]+ doesn\'t exist$/i', $msg) === 1){
+					return;
+				}else{
+					throw new AssumptionFailedError('This should never happen', 0, $e);
+				}
+			}
 			Await::g2c($queries->deleteOldPlayers());
 			if(count($rows) > 0){
 				$this->getLogger()->notice("Old data has been detected. Migrating data...");

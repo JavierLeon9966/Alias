@@ -1,13 +1,6 @@
 -- #!sqlite
 -- #{ alias
 -- #  { init
--- #    { old_players
-CREATE TABLE IF NOT EXISTS Players(
-  Username VARCHAR NOT NULL,
-  Data     VARCHAR NOT NULL,
-  PRIMARY KEY(Username)
-);
--- #    }
 -- #    { known_players
 CREATE TABLE IF NOT EXISTS KnownPlayers(
   Username VARCHAR(16) PRIMARY KEY
