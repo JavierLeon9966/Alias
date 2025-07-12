@@ -5,9 +5,10 @@ branches:
 - PM4
 projects:
   Alias:
+    # TODO: Use pharynx action
     libs:
       - src: poggit/libasynql/libasynql
-        version: ^4.0.0
+        version: ^4.2.0
       - src: sylvrs/libMarshal/libMarshal
         version: ^1.4.3
       - src: SOF3/await-generator/await-generator

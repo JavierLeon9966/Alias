@@ -18,6 +18,7 @@ use pocketmine\event\EventPriority;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerPreLoginEvent;
+use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
@@ -26,6 +27,7 @@ use pocketmine\player\Player;
 use pocketmine\plugin\DisablePluginException;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\AssumptionFailedError;
+use pocketmine\utils\Binary;
 use pocketmine\utils\ConfigLoadException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\TextFormat;
@@ -38,10 +40,10 @@ use poggit\libasynql\SqlError;
 use Ramsey\Uuid\Uuid;
 use SOFe\AwaitGenerator\Await;
 use SOFe\AwaitGenerator\Channel;
-use SOFe\AwaitStd\AwaitStd;
-use SOFe\AwaitStd\DisposeException;
+use SOFe\PmEvent\Events;
+use Symfony\Component\Filesystem\Path;
+use Throwable;
 use WeakReference;
-use Webmozart\PathUtil\Path;
 
 final class Alias extends PluginBase implements Listener{
 	use SingletonTrait{
@@ -51,7 +53,6 @@ final class Alias extends PluginBase implements Listener{
 
 	private DataConnector $connector;
 	private Database $database;
-	private AwaitStd $std;
 	private Config $config;
 	/**
 	 * @phpstan-var list<Closure(string $username, array{
@@ -87,12 +88,11 @@ final class Alias extends PluginBase implements Listener{
 			$this->getLogger()->error('Virion \'await-generator\' not found. Please download Alias from Poggit-CI.');
 			throw new DisablePluginException;
 		}
-		if(!class_exists(AwaitStd::class)){
-			$this->getLogger()->error('Virion \'await-std\' not found. Please download Alias from Poggit-CI.');
+		if(!class_exists(Events::class)){
+			$this->getLogger()->error('Virion \'pmevents\' not found. Please download Alias from Poggit-CI.');
 			throw new DisablePluginException;
 		}
 		self::$instance = $this;
-		$this->std = AwaitStd::init($this);
 		try{
 			$this->config = Config::unmarshal($this->getConfig()->getAll());
 		}catch(GeneralMarshalException|UnmarshalException|ConfigLoadException $e){
@@ -314,7 +314,9 @@ final class Alias extends PluginBase implements Listener{
 		$holdingChan = new Channel();
 		Await::g2c(
 			$this->holdLoggedPlayer($player, $holdingChan),
-			catches: [PacketHandlingException::class => static fn(PacketHandlingException $e) => throw $e]
+			catches: [PacketHandlingException::class => static function(PacketHandlingException $e): void{
+				throw $e;
+			}]
 		);
 
 		$username = $player->getName();
@@ -385,43 +387,46 @@ final class Alias extends PluginBase implements Listener{
 	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
 	 */
 	private function holdLoggedPlayer(Player $player, Channel $holdingChan): Generator{
-		$holdPlayer = function() use ($player): Generator{
-			return yield from $this->std->awaitEvent(
-				DataPacketReceiveEvent::class,
-				static fn(DataPacketReceiveEvent $event) => $event->getPacket() instanceof RequestChunkRadiusPacket &&
-					$event->getOrigin()->getPlayer() === $player,
-				true,
-				EventPriority::HIGHEST,
-				false,
-				$player
-			);
-		};
+		$chunkTraverser = Events::watch(
+			$this,
+			[DataPacketReceiveEvent::class],
+			RequestChunkRadiusPacket::NETWORK_ID . "\0" . spl_object_hash($player),
+			static fn(DataPacketReceiveEvent $event) => $event->getPacket()->pid() . "\0" . spl_object_hash($event->getOrigin()->getPlayer() ?? throw new AssumptionFailedError('Player should exist at this point'))
+		);
+        $quitTraverser = Events::watch(
+            $this,
+            [PlayerQuitEvent::class],
+            spl_object_hash($player),
+            static fn(PlayerQuitEvent $event) => spl_object_hash($event->getPlayer())
+        );
 		unset($player);
 
 		try{
-			/** @phpstan-ignore-next-line */
-			$event = yield from $holdPlayer();
+			[, $event] = yield from Await::safeRace([$chunkTraverser->next($_), $quitTraverser->next($_)]);
+            if(!$event instanceof DataPacketReceiveEvent){
+                yield from $holdingChan->receive();
+                return;
+            }
 			$packet = $event->getPacket();
 			$session = $event->getOrigin();
 			$event->cancel();
-		}catch(DisposeException){
-			unset($holdPlayer); //Remove the unnecessary player reference to let the player destruct
-			yield from $holdingChan->receive();
-			return;
+		}catch(Throwable $e){
+            throw new AssumptionFailedError('This should never happen', 0, $e);
+        }finally{
+			yield from $quitTraverser->interrupt();
 		}
 
 		try{
-			/** @phpstan-ignore-next-line */
-			[$which,] = yield from Await::race([$holdingChan->receive(), $holdPlayer()]);
+			[$which,] = yield from Await::safeRace([$holdingChan->receive(), $chunkTraverser->next($_)]);
 			if($which === 1){
 				throw new PacketHandlingException('There shouldn\'t be a RequestChunkRadiusPacket after another');
 			}
 			$serializer = PacketSerializer::encoder($session->getPacketSerializerContext());
 			$packet->encode($serializer);
 			$session->handleDataPacket($packet, $serializer->getBuffer());
-		}catch(DisposeException){
-			// NOOP
-		}
+		}catch(Throwable $e){
+			throw new AssumptionFailedError('This should never happen', 0, $e);
+        }
 	}
 
 	/**
