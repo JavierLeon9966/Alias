@@ -1,48 +1,38 @@
 -- #!sqlite
 -- #{ alias
 -- #  { init
--- #    { known_players
-CREATE TABLE IF NOT EXISTS KnownPlayers(
-  Username VARCHAR(16) PRIMARY KEY
-);
--- #    }
 -- #    { address
 CREATE TABLE IF NOT EXISTS Addresses(
   Username VARCHAR(16) NOT NULL,
   Address  VARCHAR(39) NOT NULL, -- Includes IPv4 and IPv6
-  PRIMARY KEY(Username, Address),
-  FOREIGN KEY(Username) REFERENCES KnownPlayers(Username) ON DELETE CASCADE
+  PRIMARY KEY(Username, Address)
 );
 -- #    }
 -- #    { client_random_id
 CREATE TABLE IF NOT EXISTS ClientRandomIds(
   Username       VARCHAR(16) NOT NULL,
   ClientRandomId INTEGER     NOT NULL,
-  PRIMARY KEY(Username, ClientRandomId),
-  FOREIGN KEY(Username) REFERENCES KnownPlayers(Username) ON DELETE CASCADE
+  PRIMARY KEY(Username, ClientRandomId)
 );
 -- #    }
 -- #    { device_id
 CREATE TABLE IF NOT EXISTS DeviceIds(
   Username VARCHAR(16) NOT NULL,
   DeviceId VARCHAR(36) NOT NULL,
-  PRIMARY KEY(Username, DeviceId),
-  FOREIGN KEY(Username) REFERENCES KnownPlayers(Username) ON DELETE CASCADE
+  PRIMARY KEY(Username, DeviceId)
 );
 -- #    }
 -- #    { self_signed_id
 CREATE TABLE IF NOT EXISTS SelfSignedIds(
     Username     VARCHAR(16) NOT NULL,
     SelfSignedId VARCHAR(36) NOT NULL,
-    PRIMARY KEY (Username, SelfSignedId),
-    FOREIGN KEY (Username) REFERENCES KnownPlayers (Username) ON DELETE CASCADE
+    PRIMARY KEY (Username, SelfSignedId)
 );
 -- #    }
 -- #    { xuid
 CREATE TABLE IF NOT EXISTS XUIDs(
   Username VARCHAR(16) PRIMARY KEY,
-  XUID     VARCHAR(16) NOT NULL,
-  FOREIGN KEY(Username) REFERENCES KnownPlayers(Username) ON DELETE CASCADE
+  XUID     VARCHAR(16) NOT NULL
 );
 -- #    }
 -- #  }
@@ -111,10 +101,6 @@ WHERE Username != LOWER(:username) AND (XUID = (
 -- #    }
 -- #  }
 -- #  { add
--- #    { known_player
--- #      :username string
-INSERT OR IGNORE INTO KnownPlayers(Username) VALUES(LOWER(:username));
--- #    }
 -- #    { address
 -- #      :username string
 -- #      :address string

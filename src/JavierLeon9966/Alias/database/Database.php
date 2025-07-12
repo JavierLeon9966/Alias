@@ -9,11 +9,6 @@ interface Database{
 	/**
 	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
 	 */
-	public function addKnownPlayer(string $username): Generator;
-
-	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
-	 */
 	public function addAddress(string $username, string $address): Generator;
 
 	/**

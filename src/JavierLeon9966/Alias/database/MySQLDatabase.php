@@ -18,39 +18,21 @@ final class MySQLDatabase implements Database{
 		$this->selfSignedIdMu = new Mutex();
 		$this->xuidMu = new Mutex();
 
-		$load = new Loading(fn() => yield from $this->queries->initKnownPlayers());
-		Await::g2c($this->addressMu->runClosure(function() use($load): Generator{
-			yield from $load->get();
+		Await::g2c($this->addressMu->runClosure(function(): Generator{
 			yield from $this->queries->initAddress();
 		}));
-		Await::g2c($this->clientRandomIdMu->runClosure(function() use($load): Generator{
-			yield from $load->get();
+		Await::g2c($this->clientRandomIdMu->runClosure(function(): Generator{
 			yield from $this->queries->initClientRandomId();
 		}));
-		Await::g2c($this->deviceIdMu->runClosure(function() use($load): Generator{
-			yield from $load->get();
+		Await::g2c($this->deviceIdMu->runClosure(function(): Generator{
 			yield from $this->queries->initDeviceId();
 		}));
-		Await::g2c($this->selfSignedIdMu->runClosure(function() use($load): Generator{
-			yield from $load->get();
+		Await::g2c($this->selfSignedIdMu->runClosure(function(): Generator{
 			yield from $this->queries->initSelfSignedId();
 		}));
-		Await::g2c($this->xuidMu->runClosure(function() use($load): Generator{
-			yield from $load->get();
+		Await::g2c($this->xuidMu->runClosure(function(): Generator{
 			yield from $this->queries->initXuid();
 		}));
-	}
-	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
-	 */
-	public function addKnownPlayer(string $username): Generator{
-		$load = new Loading(fn() => yield from $this->queries->addKnownPlayer($username));
-		Await::g2c($this->addressMu->runClosure(static fn() => yield from $load->get()));
-		Await::g2c($this->clientRandomIdMu->runClosure(static fn() => yield from $load->get()));
-		Await::g2c($this->deviceIdMu->runClosure(static fn() => yield from $load->get()));
-		Await::g2c($this->selfSignedIdMu->runClosure(static fn() => yield from $load->get()));
-		Await::g2c($this->xuidMu->runClosure(static fn() => yield from $load->get()));
-		yield from $load->get();
 	}
 
 	/**

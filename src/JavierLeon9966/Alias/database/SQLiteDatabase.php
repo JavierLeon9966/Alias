@@ -9,19 +9,11 @@ use SOFe\AwaitGenerator\Await;
 final class SQLiteDatabase implements Database{
 
 	public function __construct(private RawQueries $queries){
-		Await::g2c($this->queries->initKnownPlayers());
 		Await::g2c($this->queries->initAddress());
 		Await::g2c($this->queries->initClientRandomId());
 		Await::g2c($this->queries->initDeviceId());
 		Await::g2c($this->queries->initSelfSignedId());
 		Await::g2c($this->queries->initXuid());
-	}
-
-	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
-	 */
-	public function addKnownPlayer(string $username): Generator{
-		yield from $this->queries->addKnownPlayer($username);
 	}
 
 	/**

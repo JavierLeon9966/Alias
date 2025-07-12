@@ -222,7 +222,6 @@ final class Alias extends PluginBase implements Listener{
 			 *  } $data
 			 */
 			$savePlayer = function(array $data, string $username): Generator{
-				yield from $this->database->addKnownPlayer($username);
 				$gens = [];
 				foreach($data['Address'] as $address){
 					$gens[] = $this->database->addAddress($username, $address);
@@ -377,7 +376,6 @@ final class Alias extends PluginBase implements Listener{
 			$detected = yield from $this->isPlayerDetected($username, $data);
 			$holdingChan->sendWithoutWait(true);
 			if(!$detected){
-				yield from $this->database->addKnownPlayer($username);
 				Await::g2c($this->database->addAddress($username, $data['Address']));
 				if(isset($data['ClientRandomId'])){
 					Await::g2c($this->database->addClientRandomId($username, $data['ClientRandomId']));
@@ -402,7 +400,6 @@ final class Alias extends PluginBase implements Listener{
 				$weakPlayer->get()?->kick($this->config->ban);
 			}
 
-			yield from $this->database->addKnownPlayer($username);
 			foreach($this->saveData as $saveDatum){
 				Await::g2c($saveDatum($username, $data));
 			}
