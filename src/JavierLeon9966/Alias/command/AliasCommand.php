@@ -7,7 +7,7 @@ use pocketmine\command\utils\InvalidCommandSyntaxException;
 use pocketmine\player\Player;
 use pocketmine\plugin\{Plugin, PluginOwned, PluginOwnedTrait};
 use pocketmine\utils\TextFormat;
-use SOFe\AwaitGenerator\Await;
+use JavierLeon9966\Alias\libs\_bc46b7a33061b3b0\SOFe\AwaitGenerator\Await;
 use WeakReference;
 
 class AliasCommand extends Command implements PluginOwned{
