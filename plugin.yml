@@ -1,7 +1,7 @@
 name: Alias
 main: JavierLeon9966\Alias\Alias
 author: Javier Leon9966
-version: 1.4.1
+version: 2.0.0
 api: 5.0.0
 mcpe-protocol:
   - 431
