@@ -53,7 +53,7 @@ WHERE Username != LOWER(:username) AND (Address IN (
 -- #    }
 -- #    { client_random_id
 -- #      :username string
--- #      :extraClientRandomId ?int
+-- #      :extraClientRandomId ?string
 SELECT DISTINCT Username
 FROM ClientRandomIds
 WHERE Username != LOWER(:username) AND (ClientRandomId IN (
@@ -105,7 +105,7 @@ VALUES(:username, :address);
 -- #    }
 -- #    { client_random_id
 -- #      :username string
--- #      :clientRandomId int
+-- #      :clientRandomId string
 INSERT OR IGNORE INTO ClientRandomIds(Username, ClientRandomId)
 VALUES(:username, :clientRandomId);
 -- #    }

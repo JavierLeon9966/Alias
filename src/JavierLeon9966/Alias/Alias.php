@@ -390,7 +390,7 @@ final class Alias extends PluginBase implements Listener{
 				$database = yield from self::$database->get();
 				Await::g2c($database->addAddress($username, $data['Address']));
 				if(isset($data['ClientRandomId'])){
-					Await::g2c($database->addClientRandomId($username, $data['ClientRandomId']));
+					Await::g2c($database->addClientRandomId($username, (string) $data['ClientRandomId']));
 				}
 				if(isset($data['DeviceId'])){
 					Await::g2c($database->addDeviceId($username, $data['DeviceId']));

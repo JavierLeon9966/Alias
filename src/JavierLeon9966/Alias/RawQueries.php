@@ -34,10 +34,10 @@ final class RawQueries{
 	 * - resources/mysql/stmt.sql:91
 	 * - resources/sqlite/stmt.sql:111
 	 * @param string $username
-	 * @param int $clientRandomId
+	 * @param string $clientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, int>
 	 */
-	public function addClientRandomId(string $username, int $clientRandomId, ) : Generator {
+	public function addClientRandomId(string $username, string $clientRandomId, ) : Generator {
 		$this->conn->executeInsert("alias.add.client_random_id", ["username" => $username, "clientRandomId" => $clientRandomId, ], yield Await::RESOLVE, yield Await::REJECT);
 		return yield Await::ONCE;
 	}
@@ -110,10 +110,10 @@ final class RawQueries{
 	 * - resources/mysql/stmt.sql:56
 	 * - resources/sqlite/stmt.sql:64
 	 * @param string $username
-	 * @param ?int $extraClientRandomId
+	 * @param ?string $extraClientRandomId
 	 * @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<array<string, mixed>>>
 	 */
-	public function getAltClientRandomId(string $username, ?int $extraClientRandomId, ) : Generator {
+	public function getAltClientRandomId(string $username, ?string $extraClientRandomId, ) : Generator {
 		$this->conn->executeSelect("alias.get_alt.client_random_id", ["username" => $username, "extraClientRandomId" => $extraClientRandomId, ], yield Await::RESOLVE, yield Await::REJECT);
 		return yield Await::ONCE;
 	}
