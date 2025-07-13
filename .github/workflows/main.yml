@@ -1,40 +1,60 @@
 name: CI
-
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
-
+  - push
+  - pull_request
 jobs:
-  PHPStan_Analyze:
-    name: PHPStan Analysis
-    runs-on: ubuntu-latest
+  phpstan:
+    name: PHPStan Analyze
+    runs-on: ubuntu-22.04
     strategy:
-      fail-fast: false
-
+      matrix:
+        php:
+          - "8.2"
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup PHP and tools
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+      - uses: pmmp/setup-php-action@3.2.0
         with:
-          php-version: 8.1
-          tools: phpstan
-          coverage: none
-
-      - name: Get composer cache directory
+          php-version: ${{ matrix.php }}
+          install-path: "../bin"
+          pm-version-major: "5"
+      - name: Restore Composer package cache
         id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          path: "~/.cache/composer"
+          key: "php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}"
+          restore-keys: "php-${{ matrix.php }}-composer-"
 
-      - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader --ignore-platform-reqs
+      - name: Install PHPStan Composer dependencies
+        working-directory: ./
+        run: composer install --prefer-dist --no-interaction
 
-      - name: Run PhpStan
-        run: phpstan analyze --no-progress src -c phpstan.neon.dist
+      - name: Run PHPStan
+        working-directory: ./
+        run: vendor/bin/phpstan analyze
+  pharynx:
+    name: build phar
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
+    strategy:
+      matrix:
+        php:
+          - "8.2"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pmmp/setup-php-action@3.2.0
+        with:
+          php-version: ${{ matrix.php }}
+          install-path: "../bin"
+          pm-version-major: "5"
+      - uses: SOF3/pharynx@v0.2
+        id: pharynx
+        with:
+          additional-assets: |
+            icon.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin.phar
+          path: ${{steps.pharynx.outputs.output-phar}}
