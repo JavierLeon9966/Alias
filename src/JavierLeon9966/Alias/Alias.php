@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use JavierLeon9966\Alias\command\AliasCommand;
 use JavierLeon9966\Alias\config\DatabaseConfig;
+use JavierLeon9966\Alias\database\Database;
 use libMarshal\exception\GeneralMarshalException;
 use libMarshal\exception\UnmarshalException;
 use libMarshal\MarshalTrait;
