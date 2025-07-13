@@ -36,8 +36,8 @@ use SOFe\AwaitGenerator\Await;
 
 Await::f2c(function() use($player){
     $database = yield from Alias::getDatabase();
-    $addresses = yield from $database->getPlayersMatchingAddressesFrom($player->getName());
-    //Do something with the addresses
+    $players = yield from $database->getPlayersMatchingAddressesFrom($player->getName());
+    //Do something with the players whose adresses match the given player's name
 });
 ```
 
