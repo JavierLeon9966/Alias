@@ -11,7 +11,7 @@ final readonly class Database{
 	private function __construct(private RawQueries $queries){
 	}
 
-	/** @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, \JavierLeon9966\Alias\database\Database> */
+	/** @return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, \JavierLeon9966\Alias\database\Database> */
 	public static function create(RawQueries $queries): Generator{
 		$instance = new self($queries);
 		yield from $queries->initTables();
@@ -19,28 +19,28 @@ final readonly class Database{
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	public function addAddress(string $username, string $address): Generator{
 		yield from $this->queries->addAddress($username, $address);
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	public function addClientRandomId(string $username, int $clientRandomId): Generator{
 		yield from $this->queries->addClientRandomId($username, $clientRandomId);
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	public function addDeviceId(string $username, string $deviceId): Generator{
 		yield from $this->queries->addDeviceId($username, $deviceId);
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	public function addSelfSignedId(string $username, string $selfSignedId): Generator{
 		yield from $this->queries->addSelfSignedId($username, $selfSignedId);
@@ -48,14 +48,14 @@ final readonly class Database{
 
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	public function addXuid(string $username, string $xuid): Generator{
 		yield from $this->queries->addXuid($username, $xuid);
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, list<string>>
 	 */
 	public function getPlayersMatchingAddressesFrom(string $username, ?string $extraAddress = null): Generator{
 		/**
@@ -66,7 +66,7 @@ final readonly class Database{
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, list<string>>
 	 */
 	public function getPlayersMatchingClientRandomIdsFrom(string $username, ?int $extraClientRandomId = null): Generator{
 		/**
@@ -78,7 +78,7 @@ final readonly class Database{
 
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, list<string>>
 	 */
 	public function getPlayersMatchingDeviceIdsFrom(string $username, ?string $extraDeviceId = null): Generator{
 		/**
@@ -89,7 +89,7 @@ final readonly class Database{
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, list<string>>
 	 */
 	public function getPlayersMatchingSelfSignedIdsFrom(string $username, ?string $extraSelfSignedId = null): Generator{
 		/**
@@ -100,7 +100,7 @@ final readonly class Database{
 	}
 
 	/**
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, list<string>>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, list<string>>
 	 */
 	public function getPlayersMatchingXUIDFrom(string $username, ?string $extraXuid = null): Generator{
 		/**

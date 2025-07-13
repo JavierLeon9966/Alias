@@ -12,7 +12,6 @@ use JavierLeon9966\Alias\database\Database;
 use libMarshal\exception\GeneralMarshalException;
 use libMarshal\exception\UnmarshalException;
 use libMarshal\MarshalTrait;
-use pocketmine\event\EventPriority;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerPreLoginEvent;
@@ -24,16 +23,14 @@ use pocketmine\network\PacketHandlingException;
 use pocketmine\player\Player;
 use pocketmine\plugin\DisablePluginException;
 use pocketmine\plugin\PluginBase;
+use pocketmine\plugin\PluginException;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\Binary;
 use pocketmine\utils\ConfigLoadException;
-use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\TextFormat;
 use poggit\libasynql\ConfigException;
 use poggit\libasynql\DataConnector;
 use poggit\libasynql\ExtensionMissingException;
 use poggit\libasynql\libasynql;
-use poggit\libasynql\SqlDialect;
 use poggit\libasynql\SqlError;
 use Ramsey\Uuid\Uuid;
 use SOFe\AwaitGenerator\Await;
@@ -45,38 +42,32 @@ use Throwable;
 use WeakReference;
 
 final class Alias extends PluginBase implements Listener{
-	use SingletonTrait{
-		setInstance as private;
-		reset as private;
-	}
-
-	private DataConnector $connector;
+	private static DataConnector $connector;
 	/** @var \SOFe\AwaitGenerator\Loading<Database> */
-	private Loading $database;
-	private Config $config;
+	private static Loading $database;
+	private static Config $config;
 	/**
-	 * @phpstan-var list<Closure(string $username, array{
-	 *     Address: string,
-	 *     ClientRandomId?: int,
-	 *     DeviceId?: string,
-	 *     XUID?: string,
-	 *     SelfSignedId?: string
-	 * } $data): Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, bool>> $checks
-	 * @var Closure[] $checks
+	 * @var array{
+	 *     Address?: Closure(string, string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>,
+	 *     ClientRandomId?: Closure(string, ?int): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>,
+	 *     DeviceId?: Closure(string, ?string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>,
+	 *      SelfSignedId?: Closure(string, ?string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>,
+	 *     XUID?: Closure(string, ?string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>
+	 * } $checks
 	 */
 	private array $checks = [];
 	/**
-	 * @phpstan-var list<Closure(string $username, array{
-	 *     Address: string,
-	 *     ClientRandomId?: int,
-	 *     DeviceId?: string,
-	 *     XUID?: string,
-	 *     SelfSignedId?: string
-	 * } $data): Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>> $saveData
-	 * @var Closure[] $saveData
+	 * @var array{
+	 *     Address?: Closure(string, string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>,
+	 *     ClientRandomId?: Closure(string, int): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>,
+	 *     DeviceId?: Closure(string, string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>,
+	 *      SelfSignedId?: Closure(string, string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>,
+	 *     XUID?: Closure(string, string): Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
+	 * } $saveData
 	 */
 	private array $saveData = [];
 
+	/** @throws \pocketmine\plugin\DisablePluginException */
 	protected function onEnable(): void{
 		if(!trait_exists(MarshalTrait::class)){
 			$this->getLogger()->error('Virion \'libMarshal\' not found. Please download Alias from Poggit-CI.');
@@ -94,14 +85,13 @@ final class Alias extends PluginBase implements Listener{
 			$this->getLogger()->error('Virion \'pmevents\' not found. Please download Alias from Poggit-CI.');
 			throw new DisablePluginException;
 		}
-		self::$instance = $this;
 		try{
-			$this->config = Config::unmarshal($this->getConfig()->getAll());
+			self::$config = Config::unmarshal($this->getConfig()->getAll());
 		}catch(GeneralMarshalException|UnmarshalException|ConfigLoadException $e){
 			$this->getLogger()->error($e->getMessage());
 			throw new DisablePluginException;
 		}
-		$databaseConfig = $this->config->database ?? new DatabaseConfig;
+		$databaseConfig = self::$config->database ?? new DatabaseConfig;
 		$friendlyConfig = [
 			'type' => $databaseConfig->type,
 			'sqlite' => [
@@ -117,7 +107,7 @@ final class Alias extends PluginBase implements Listener{
 			'worker-limit' => $databaseConfig->type !== 'sqlite' ? $databaseConfig->workerLimit : 1
 		];
 		try{
-			$this->connector = libasynql::create($this, $friendlyConfig, [
+			self::$connector = libasynql::create($this, $friendlyConfig, [
 				'sqlite' => Path::join('sqlite', 'stmt.sql'),
 				'mysql' => Path::join('mysql', 'stmt.sql')
 			]);
@@ -125,86 +115,78 @@ final class Alias extends PluginBase implements Listener{
 			$this->getLogger()->error($e->getMessage());
 			throw new DisablePluginException();
 		}
-		$queries = new RawQueries($this->connector);
-		$this->database = new Loading(function() use($queries): Generator{
+		$queries = new RawQueries(self::$connector);
+		self::$database = new Loading(function() use($queries): Generator{
 			return yield from Database::create($queries);
 		});
-		$checks = array_fill_keys($this->config->data, true);
+		$checks = array_fill_keys(self::$config->data, true);
 		if(isset($checks['Address'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$database = $players = yield from $this->database->get();
-				yield from $database->getPlayersMatchingAddressesFrom($username, $data['Address']);
+			$this->checks['Address'] = function(string $username, string $address): Generator{
+				$database = yield from self::$database->get();
+				$players = yield from $database->getPlayersMatchingAddressesFrom($username, $address);
 				return count($players) > 0;
 			};
 		}
 		if(isset($checks['ClientRandomId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$database = $players = yield from $this->database->get();
-				yield from $database->getPlayersMatchingClientRandomIdsFrom($username, $data['ClientRandomId'] ?? null);
+			$this->checks['ClientRandomId'] = function(string $username, ?int $clientRandomId): Generator{
+				$database = yield from self::$database->get();
+				$players = yield from $database->getPlayersMatchingClientRandomIdsFrom($username, $clientRandomId);
 				return count($players) > 0;
 			};
 		}
 		if(isset($checks['DeviceId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$database = $players = yield from $this->database->get();
-				yield from $database->getPlayersMatchingDeviceIdsFrom($username, $data['DeviceId'] ?? null);
+			$this->checks['DeviceId'] = function(string $username, ?string $deviceId): Generator{
+				$database = yield from self::$database->get();
+				$players = yield from $database->getPlayersMatchingDeviceIdsFrom($username, $deviceId);
 				return count($players) > 0;
 			};
 		}
 		if(isset($checks['SelfSignedId'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$database = $players = yield from $this->database->get();
-				yield from $database->getPlayersMatchingSelfSignedIdsFrom($username, $data['SelfSignedId'] ?? null);
+			$this->checks['SelfSignedId'] = function(string $username, ?string $selfSignedId): Generator{
+				$database = yield from self::$database->get();
+				$players = yield from $database->getPlayersMatchingSelfSignedIdsFrom($username, $selfSignedId);
 				return count($players) > 0;
 			};
 		}
 		if(isset($checks['XUID'])){
-			$this->checks[] = function(string $username, array $data): Generator{
-				$database = $players = yield from $this->database->get();
-				yield from $database->getPlayersMatchingXUIDFrom($username, $data['XUID'] ?? null);
+			$this->checks['XUID'] = function(string $username, ?string $xuid): Generator{
+				$database = yield from self::$database->get();
+				$players = yield from $database->getPlayersMatchingXUIDFrom($username, $xuid);
 				return count($players) > 0;
 			};
 		}
-		$save = array_fill_keys($this->config->save, true);
+		$save = array_fill_keys(self::$config->save, true);
 		if(isset($save['Address'])){
-			$this->saveData[] = function(string $username, array $data){
-				$database = yield from $this->database->get();
-				yield from $database->addAddress($username, $data['Address']);
+			$this->saveData['Address'] = function(string $username, string $address): Generator{
+				$database = yield from self::$database->get();
+				yield from $database->addAddress($username, $address);
 			};
 		}
 		if(isset($save['ClientRandomId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['ClientRandomId'])){
-					$database = yield from $this->database->get();
-					yield from $database->addClientRandomId($username, $data['ClientRandomId']);
-				}
+			$this->saveData['ClientRandomId'] = function(string $username, int $clientRandomId): Generator{
+				$database = yield from self::$database->get();
+				yield from $database->addClientRandomId($username, $clientRandomId);
 			};
 		}
 		if(isset($save['DeviceId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['DeviceId'])){
-					$database = yield from $this->database->get();
-					yield from $database->addDeviceId($username, $data['DeviceId']);
-				}
+			$this->saveData['DeviceId'] = function(string $username, string $deviceId): Generator{
+				$database = yield from self::$database->get();
+				yield from $database->addDeviceId($username, $deviceId);
 			};
 		}
 		if(isset($save['SelfSignedId'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['SelfSignedId'])){
-					$database = yield from $this->database->get();
-					yield from $database->addSelfSignedId($username, $data['SelfSignedId']);
-				}
+			$this->saveData['SelfSignedId'] = function(string $username, string $selfSignedId): Generator{
+				$database = yield from self::$database->get();
+				yield from $database->addSelfSignedId($username, $selfSignedId);
 			};
 		}
 		if(isset($save['XUID'])){
-			$this->saveData[] = function(string $username, array $data): Generator{
-				if(isset($data['XUID'])){
-					$database = yield from $this->database->get();
-					yield from $database->addXuid($username, $data['XUID']);
-				}
+			$this->saveData[] = function(string $username, string $xuid): Generator{
+				$database = yield from self::$database->get();
+				yield from $database->addXuid($username, $xuid);
 			};
 		}
-		//TODO: Add data encryption
+		//TODO: Add data hashing
 		Await::f2c(function() use($queries): Generator{
 			try{
 				/** @var list<array{'Username': string, 'Data': string}> $rows */
@@ -223,32 +205,22 @@ final class Alias extends PluginBase implements Listener{
 			}
 			$gens = [];
 
-			/** @phpstan-param array{
-			 *     "Address": list<string>,
-			 *     "ClientRandomId"?: list<mixed[]|int|float|string|bool|null>,
-			 *     "DeviceId"?: list<mixed[]|int|float|string|bool|null>,
-			 *     "SelfSignedId"?: list<mixed[]|int|float|string|bool|null>,
-			 *     "XUID"?: string
-			 *  } $data
-			 */
 			$savePlayer = function(array $data, string $username): Generator{
 				$gens = [];
-				$database = yield from $this->database->get();
-				foreach($data['Address'] as $address){
+				$database = yield from self::$database->get();
+				/** @var list<string> $addresses */
+				$addresses = $data['Address'];
+				foreach($addresses as $address){
 					$gens[] = $database->addAddress($username, $address);
 				}
-				foreach($data['ClientRandomId'] ?? [] as $clientRandomId){
-					if(!is_int($clientRandomId)){
-						$this->getLogger()->error("Data migration error: Expected an integer ClientRandomId from $username, got: " . (is_scalar($clientRandomId) ? $clientRandomId : get_debug_type($clientRandomId)));
-						continue;
-					}
+				/** @var list<int> $clientRandomIds */
+				$clientRandomIds = $data['ClientRandomId'] ?? [];
+				foreach($clientRandomIds as $clientRandomId){
 					$gens[] = $database->addClientRandomId($username, $clientRandomId);
 				}
-				foreach($data['DeviceId'] ?? [] as $deviceId){
-					if(!is_string($deviceId)){
-						$this->getLogger()->error("Data migration error: Expected a string DeviceId from $username, got: " . (is_scalar($deviceId) ? $deviceId : get_debug_type($deviceId)));
-						continue;
-					}
+				/** @var list<string> $deviceIds */
+				$deviceIds = $data['DeviceId'] ?? [];
+				foreach($deviceIds as $deviceId){
 					$deviceId = str_replace('-', '', $deviceId);
 					if(strlen($deviceId) !== 32 && strlen($deviceId) !== 36){
 						$this->getLogger()->error("Data migration error: Expected a string with length 32 or 36 DeviceId from $username, got: $deviceId");
@@ -268,8 +240,31 @@ final class Alias extends PluginBase implements Listener{
 					}
 					$gens[] = $database->addDeviceId($username, $deviceId);
 				}
-				// SelfSignedId is useless because it is just hash(username + client random id), but it should be verified by the server to prevent spoofing
-				if(($xuid = $data['XUID'] ?? null) !== null){
+				/** @var list<string> $selfSignedIds */
+				$selfSignedIds = $data['SelfSignedId'] ?? [];
+				foreach($selfSignedIds as $selfSignedId){
+					$selfSignedId = str_replace('-', '', $selfSignedId);
+					if(strlen($selfSignedId) !== 36){
+						$this->getLogger()->error("Data migration error: Expected a string with length 36 SelfSignedId from $username, got: $selfSignedId");
+						continue;
+					}
+					$components = [
+						substr($selfSignedId, 0, 8),
+						substr($selfSignedId, 8, 4),
+						substr($selfSignedId, 12, 4),
+						substr($selfSignedId, 16, 4),
+						substr($selfSignedId, 20),
+					];
+
+					if (!Uuid::isValid(implode('-', $components))) {
+						$this->getLogger()->error("Data migration error: Expected a valid UUID SelfSignedId from $username, got: $selfSignedId");
+						continue;
+					}
+					$gens[] = $database->addDeviceId($username, $selfSignedId);
+				}
+				/** @var ?string $xuid */
+				$xuid = $data['XUID'] ?? null;
+				if($xuid !== null){
 					$gens[] = $database->addXuid($username, $xuid);
 				}
 				yield from Await::all($gens);
@@ -277,9 +272,9 @@ final class Alias extends PluginBase implements Listener{
 			foreach($rows as ['Username' => $username, 'Data' => $data]){
 				/** @phpstan-var array{
 				 *     "Address": list<string>,
-				 *     "ClientRandomId"?: list<mixed[]|int|float|string|bool|null>,
-				 *     "DeviceId"?: list<mixed[]|int|float|string|bool|null>,
-				 *     "SelfSignedId"?: list<mixed[]|int|float|string|bool|null>,
+				 *     "ClientRandomId"?: list<array<array-key, mixed>|int|float|string|bool|null>,
+				 *     "DeviceId"?: list<array<array-key, mixed>|int|float|string|bool|null>,
+				 *     "SelfSignedId"?: list<array<array-key, mixed>|int|float|string|bool|null>,
 				 *     "XUID"?: string
 				 *  } $unSerialized
 				 */
@@ -293,22 +288,28 @@ final class Alias extends PluginBase implements Listener{
 		});
 
 		$this->getServer()->getCommandMap()->register('Alias', new AliasCommand($this));
-		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		try{
+			$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		}catch(PluginException $e){
+			throw new AssumptionFailedError('This should never happen', 0, $e);
+		}
 	}
 	protected function onDisable(): void{
-		if(isset($this->connector)){
-			$this->connector->waitAll();
-			$this->connector->close();
+		if(isset(self::$connector)){
+			self::$connector->waitAll();
+			self::$connector->close();
 		}
 	}
 
-	/** @return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, \JavierLeon9966\Alias\database\Database> */
-	public function getDatabase(): Generator{
-		return yield from $this->database->get();
+	/** @return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, \JavierLeon9966\Alias\database\Database> */
+	public static function getDatabase(): Generator{
+		return yield from self::$database->get();
 	}
 
 	/**
 	 * @priority MONITOR
+	 *
+	 * @throws \pocketmine\network\PacketHandlingException
 	 */
 	public function onPlayerPreLogin(PlayerPreLoginEvent $event): void{
 		$playerInfo = $event->getPlayerInfo();
@@ -348,7 +349,7 @@ final class Alias extends PluginBase implements Listener{
 		$holdingChan = new Channel();
 		Await::g2c(
 			$this->holdLoggedPlayer($player, $holdingChan),
-			catches: [PacketHandlingException::class => static function(PacketHandlingException $e): void{
+			catches: ['' => static function(Throwable $e): void{
 				throw $e;
 			}]
 		);
@@ -388,7 +389,7 @@ final class Alias extends PluginBase implements Listener{
 			$detected = yield from $this->isPlayerDetected($username, $data);
 			$holdingChan->sendWithoutWait(true);
 			if(!$detected){
-				$database = yield from $this->database->get();
+				$database = yield from self::$database->get();
 				Await::g2c($database->addAddress($username, $data['Address']));
 				if(isset($data['ClientRandomId'])){
 					Await::g2c($database->addClientRandomId($username, $data['ClientRandomId']));
@@ -402,26 +403,28 @@ final class Alias extends PluginBase implements Listener{
 				return;
 			}
 
-			if($this->config->alert){
+			if(self::$config->alert){
 				foreach($this->getServer()->getOnlinePlayers() as $user){
 					if($user->hasPermission('alias.alerts')){
 						$user->sendMessage(TextFormat::RED."'$username' has been detected using an alternative account");
 					}
 				}
 			}
-			if($this->config->mode === 'ban'){
-				$weakPlayer->get()?->kick($this->config->ban);
+			if(self::$config->mode === 'ban'){
+				$weakPlayer->get()?->kick(self::$config->ban);
 			}
 
-			foreach($this->saveData as $saveDatum){
-				Await::g2c($saveDatum($username, $data));
+			foreach($data as $index => $datum){
+				if(isset($this->saveData[$index])){
+					Await::g2c($this->saveData[$index]($username, $datum));
+				}
 			}
 		});
 	}
 
 	/**
 	 * @phpstan-param Channel<bool> $holdingChan
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, void>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	private function holdLoggedPlayer(Player $player, Channel $holdingChan): Generator{
 		$chunkTraverser = Events::watch(
@@ -430,40 +433,29 @@ final class Alias extends PluginBase implements Listener{
 			RequestChunkRadiusPacket::NETWORK_ID . "\0" . spl_object_hash($player),
 			static fn(DataPacketReceiveEvent $event) => $event->getPacket()->pid() . "\0" . spl_object_hash($event->getOrigin()->getPlayer() ?? throw new AssumptionFailedError('Player should exist at this point'))
 		);
-        $quitTraverser = Events::watch(
-            $this,
-            [PlayerQuitEvent::class],
-            spl_object_hash($player),
-            static fn(PlayerQuitEvent $event) => spl_object_hash($event->getPlayer())
-        );
-		unset($player);
 
 		try{
-			[, $event] = yield from Await::safeRace([$chunkTraverser->next($_), $quitTraverser->next($_)]);
-            if(!$event instanceof DataPacketReceiveEvent){
-                yield from $holdingChan->receive();
-                return;
-            }
+			yield from $chunkTraverser->next($event);
 			$packet = $event->getPacket();
 			$session = $event->getOrigin();
 			$event->cancel();
-		}catch(Throwable $e){
-            throw new AssumptionFailedError('This should never happen', 0, $e);
-        }finally{
-			yield from $quitTraverser->interrupt();
-		}
 
-		try{
 			[$which,] = yield from Await::safeRace([$holdingChan->receive(), $chunkTraverser->next($_)]);
 			if($which === 1){
+				Await::g2c($holdingChan->receive());
 				throw new PacketHandlingException('There shouldn\'t be a RequestChunkRadiusPacket after another');
+			}
+			if(!$session->isConnected()){
+				return;
 			}
 			$serializer = PacketSerializer::encoder();
 			$packet->encode($serializer);
 			$session->handleDataPacket($packet, $serializer->getBuffer());
 		}catch(Throwable $e){
 			throw new AssumptionFailedError('This should never happen', 0, $e);
-        }
+		}finally{
+			yield from $chunkTraverser->interrupt();
+		}
 	}
 
 	/**
@@ -473,7 +465,7 @@ final class Alias extends PluginBase implements Listener{
 	 *     DeviceId?: string,
 	 *     XUID?: string
 	 * } $data
-	 * @phpstan-return Generator<mixed, 'all'|'once'|'race'|'reject'|'resolve'|array{'resolve'}|Generator<mixed, mixed, mixed, mixed>|null, mixed, bool>
+	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, bool>
 	 */
 	private function isPlayerDetected(string $username, array $data): Generator{
 		/**
@@ -481,11 +473,15 @@ final class Alias extends PluginBase implements Listener{
 		 */
 		$detectionChan = new Channel();
 		Await::f2c(function() use ($data, $username, $detectionChan): Generator{
-			yield from Await::all(array_map(static function(Closure $check) use ($data, $detectionChan, $username): Generator{
-				if(yield from $check($username, $data)){
-					$detectionChan->trySend(true);
-				}
-			}, $this->checks));
+			$gens = [];
+			foreach($this->checks as $index => $check){
+				$gens[] = (function() use ($data, $detectionChan, $index, $username, $check): Generator{
+					if(yield from $check($username, $data[$index] ?? null)){
+						$detectionChan->trySend(true);
+					}
+				})();
+			}
+			yield from Await::all($gens);
 			$detectionChan->trySend(false);
 		});
 		return yield from $detectionChan->receive();

@@ -9,12 +9,15 @@ class DatabaseConfig
 {
 	use MarshalTrait;
 
-	#[Field]
-	public string $type = 'sqlite';
-	#[Field]
-	public SQLiteConfig $sqlite;
-	#[Field]
-	public MySQLConfig $mysql;
-	#[Field(name: "worker-limit")]
-	public int $workerLimit = 1;
+	public function __construct(
+		#[Field]
+		public string $type = 'sqlite',
+		#[Field]
+		public SQLiteConfig $sqlite = new SQLiteConfig(),
+		#[Field]
+		public MySQLConfig $mysql = new MySQLConfig(),
+		#[Field(name: "worker-limit")]
+		public int $workerLimit = 1
+	){
+	}
 }

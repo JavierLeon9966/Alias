@@ -4,15 +4,15 @@ use Generator;
 use JavierLeon9966\Alias\Alias;
 use pocketmine\command\{Command, CommandSender};
 use pocketmine\command\utils\InvalidCommandSyntaxException;
-use pocketmine\plugin\{PluginOwned, PluginOwnedTrait};
 use pocketmine\player\Player;
+use pocketmine\plugin\{Plugin, PluginOwned, PluginOwnedTrait};
 use pocketmine\utils\TextFormat;
 use SOFe\AwaitGenerator\Await;
 use WeakReference;
 
 class AliasCommand extends Command implements PluginOwned{
 	use PluginOwnedTrait;
-	public function __construct(Alias $plugin){
+	public function __construct(Plugin $plugin){
 		$this->owningPlugin = $plugin;
 		parent::__construct(
 			'alias',
@@ -26,7 +26,7 @@ class AliasCommand extends Command implements PluginOwned{
 			return;
 		}
 
-		if(count($args) == 0){
+		if(count($args) === 0){
 			throw new InvalidCommandSyntaxException;
 		}
 		/**
@@ -34,10 +34,7 @@ class AliasCommand extends Command implements PluginOwned{
 		 */
 		$weakSender = WeakReference::create($sender);
 		Await::f2c(function() use ($args, $weakSender): Generator{
-			if(!$this->owningPlugin instanceof Alias){
-				return;
-			}
-			$database = yield from $this->owningPlugin->getDatabase();
+			$database = yield from Alias::getDatabase();
 			$detected = yield from Await::all([
 				'Address' => $database->getPlayersMatchingAddressesFrom($args[0]),
 				'ClientRandomId' => $database->getPlayersMatchingClientRandomIdsFrom($args[0]),
