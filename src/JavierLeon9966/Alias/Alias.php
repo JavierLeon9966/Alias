@@ -15,9 +15,11 @@ use libMarshal\MarshalTrait;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerPreLoginEvent;
+use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
+use pocketmine\network\mcpe\protocol\SetLocalPlayerAsInitializedPacket;
 use pocketmine\network\PacketHandlingException;
 use pocketmine\player\Player;
 use pocketmine\plugin\DisablePluginException;
@@ -36,6 +38,7 @@ use SOFe\AwaitGenerator\Await;
 use SOFe\AwaitGenerator\Channel;
 use SOFe\AwaitGenerator\Loading;
 use SOFe\PmEvent\Events;
+use stdClass;
 use Symfony\Component\Filesystem\Path;
 use Throwable;
 use WeakReference;
@@ -425,23 +428,41 @@ final class Alias extends PluginBase implements Listener{
 	 * @phpstan-return Generator<mixed, Await::RESOLVE|null|Await::RESOLVE_MULTI|Await::REJECT|Await::ONCE|Await::ALL|Await::RACE|Generator, mixed, void>
 	 */
 	private function holdLoggedPlayer(Player $player, Channel $holdingChan): Generator{
-		$chunkTraverser = Events::watch(
+		$initAndQuitTraverser = Events::watch(
 			$this,
-			[DataPacketReceiveEvent::class],
-			RequestChunkRadiusPacket::NETWORK_ID . "\0" . spl_object_hash($player),
-			static fn(DataPacketReceiveEvent $event) => $event->getPacket()->pid() . "\0" . spl_object_hash($event->getOrigin()->getPlayer() ?? throw new AssumptionFailedError('Player should exist at this point'))
+			[DataPacketReceiveEvent::class, PlayerQuitEvent::class],
+			spl_object_hash($player),
+			static function(DataPacketReceiveEvent|PlayerQuitEvent $event): string{
+				if($event instanceof PlayerQuitEvent){
+					return spl_object_hash($event->getPlayer());
+				}
+				$player = $event->getOrigin()->getPlayer();
+				if($event->getPacket() instanceof SetLocalPlayerAsInitializedPacket){
+					if($player === null){
+						throw new AssumptionFailedError('Player should exist at this point');
+					}
+					return spl_object_hash($player);
+				}
+				return spl_object_hash(new stdClass());
+			}
 		);
 
 		try{
-			yield from $chunkTraverser->next($event);
+			yield from $initAndQuitTraverser->next($event);
+			if(!$event instanceof DataPacketReceiveEvent){
+				Await::g2c($holdingChan->receive());
+				return;
+			}
 			$packet = $event->getPacket();
 			$session = $event->getOrigin();
 			$event->cancel();
 
-			[$which,] = yield from Await::safeRace([$holdingChan->receive(), $chunkTraverser->next($_)]);
+			[$which,] = yield from Await::safeRace([$holdingChan->receive(), $initAndQuitTraverser->next($event)]);
 			if($which === 1){
 				Await::g2c($holdingChan->receive());
-				throw new PacketHandlingException('There shouldn\'t be a RequestChunkRadiusPacket after another');
+				if($event instanceof DataPacketReceiveEvent){
+					throw new PacketHandlingException('There shouldn\'t be a SetLocalPlayerAsInitializedPacket after another');
+				}
 			}
 			if(!$session->isConnected()){
 				return;
@@ -452,7 +473,7 @@ final class Alias extends PluginBase implements Listener{
 		}catch(Throwable $e){
 			throw new AssumptionFailedError('This should never happen', 0, $e);
 		}finally{
-			yield from $chunkTraverser->interrupt();
+			yield from $initAndQuitTraverser->interrupt();
 		}
 	}
 
