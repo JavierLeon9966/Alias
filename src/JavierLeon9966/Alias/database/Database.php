@@ -4,7 +4,7 @@ namespace JavierLeon9966\Alias\database;
 
 use Generator;
 use JavierLeon9966\Alias\RawQueries;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\SOFe\AwaitGenerator\Await;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\SOFe\AwaitGenerator\Await;
 
 final readonly class Database{
 

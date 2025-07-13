@@ -26,16 +26,16 @@ use pocketmine\plugin\PluginException;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ConfigLoadException;
 use pocketmine\utils\TextFormat;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\poggit\libasynql\ConfigException;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\poggit\libasynql\DataConnector;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\poggit\libasynql\ExtensionMissingException;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\poggit\libasynql\libasynql;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\poggit\libasynql\SqlError;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\poggit\libasynql\ConfigException;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\poggit\libasynql\DataConnector;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\poggit\libasynql\ExtensionMissingException;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\poggit\libasynql\libasynql;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\poggit\libasynql\SqlError;
 use Ramsey\Uuid\Uuid;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\SOFe\AwaitGenerator\Await;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\SOFe\AwaitGenerator\Channel;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\SOFe\AwaitGenerator\Loading;
-use JavierLeon9966\Alias\libs\_24e0cc42ec764f41\SOFe\PmEvent\Events;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\SOFe\AwaitGenerator\Await;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\SOFe\AwaitGenerator\Channel;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\SOFe\AwaitGenerator\Loading;
+use JavierLeon9966\Alias\libs\_19054ac54d296eaf\SOFe\PmEvent\Events;
 use Symfony\Component\Filesystem\Path;
 use Throwable;
 use WeakReference;
@@ -390,7 +390,7 @@ final class Alias extends PluginBase implements Listener{
 				$database = yield from self::$database->get();
 				Await::g2c($database->addAddress($username, $data['Address']));
 				if(isset($data['ClientRandomId'])){
-					Await::g2c($database->addClientRandomId($username, $data['ClientRandomId']));
+					Await::g2c($database->addClientRandomId($username, (string) $data['ClientRandomId']));
 				}
 				if(isset($data['DeviceId'])){
 					Await::g2c($database->addDeviceId($username, $data['DeviceId']));
