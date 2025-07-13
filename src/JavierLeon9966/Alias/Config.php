@@ -9,15 +9,21 @@ use libMarshal\MarshalTrait;
 class Config{
 	use MarshalTrait;
 
-	#[Field]
-	public DatabaseConfig $database;
-	#[Field]
-	public bool $alert = false;
-	#[Field]
-	public string $ban = "You are banned";
-	#[Field]
-	public string $mode = "none";
-	/** @var string[] $data */
-	#[Field]
-	public array $data = ['Address', 'ClientRandomId', 'DeviceId', 'SelfSignedId', 'XUID'];
+	public function __construct(
+		#[Field]
+		public DatabaseConfig $database = new DatabaseConfig(),
+		#[Field]
+		public bool $alert = false,
+		#[Field]
+		public string $ban = "You are banned",
+		#[Field]
+		public string $mode = "none",
+		/** @var string[] $data */
+		#[Field]
+		public array $data = ['Address', 'ClientRandomId', 'DeviceId', 'XUID'],
+		/** @var string[] $save */
+		#[Field]
+		public array $save  = ['Address', 'XUID']
+	){
+	}
 }
