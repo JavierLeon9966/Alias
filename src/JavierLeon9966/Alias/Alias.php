@@ -130,7 +130,7 @@ final class Alias extends PluginBase implements Listener{
 		if(isset($checks['ClientRandomId'])){
 			$this->checks['ClientRandomId'] = function(string $username, ?int $clientRandomId): Generator{
 				$database = yield from self::$database->get();
-				$players = yield from $database->getPlayersMatchingClientRandomIdsFrom($username, $clientRandomId);
+				$players = yield from $database->getPlayersMatchingClientRandomIdsFrom($username, $clientRandomId !== null ? (string) $clientRandomId : null);
 				return count($players) > 0;
 			};
 		}
@@ -165,7 +165,7 @@ final class Alias extends PluginBase implements Listener{
 		if(isset($save['ClientRandomId'])){
 			$this->saveData['ClientRandomId'] = function(string $username, int $clientRandomId): Generator{
 				$database = yield from self::$database->get();
-				yield from $database->addClientRandomId($username, $clientRandomId);
+				yield from $database->addClientRandomId($username, (string) $clientRandomId);
 			};
 		}
 		if(isset($save['DeviceId'])){
@@ -181,12 +181,11 @@ final class Alias extends PluginBase implements Listener{
 			};
 		}
 		if(isset($save['XUID'])){
-			$this->saveData[] = function(string $username, string $xuid): Generator{
+			$this->saveData['XUID'] = function(string $username, string $xuid): Generator{
 				$database = yield from self::$database->get();
 				yield from $database->addXuid($username, $xuid);
 			};
 		}
-		//TODO: Add data hashing
 		Await::f2c(function() use($queries): Generator{
 			try{
 				/** @var list<array{'Username': string, 'Data': string}> $rows */
@@ -216,7 +215,7 @@ final class Alias extends PluginBase implements Listener{
 				/** @var list<int> $clientRandomIds */
 				$clientRandomIds = $data['ClientRandomId'] ?? [];
 				foreach($clientRandomIds as $clientRandomId){
-					$gens[] = $database->addClientRandomId($username, $clientRandomId);
+					$gens[] = $database->addClientRandomId($username, (string) $clientRandomId);
 				}
 				/** @var list<string> $deviceIds */
 				$deviceIds = $data['DeviceId'] ?? [];
@@ -260,7 +259,7 @@ final class Alias extends PluginBase implements Listener{
 						$this->getLogger()->error("Data migration error: Expected a valid UUID SelfSignedId from $username, got: $selfSignedId");
 						continue;
 					}
-					$gens[] = $database->addDeviceId($username, $selfSignedId);
+					$gens[] = $database->addSelfSignedId($username, $selfSignedId);
 				}
 				/** @var ?string $xuid */
 				$xuid = $data['XUID'] ?? null;

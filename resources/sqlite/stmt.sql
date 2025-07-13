@@ -4,31 +4,31 @@
 -- #    { tables
 CREATE TABLE IF NOT EXISTS Addresses(
   Username VARCHAR(16) NOT NULL,
-  Address  VARCHAR(39) NOT NULL, -- Includes IPv4 and IPv6
+  Address  VARCHAR(128) NOT NULL,
   PRIMARY KEY(Username, Address)
 );
 -- # &
 CREATE TABLE IF NOT EXISTS ClientRandomIds(
   Username       VARCHAR(16) NOT NULL,
-  ClientRandomId INTEGER     NOT NULL,
+  ClientRandomId VARCHAR(128)     NOT NULL,
   PRIMARY KEY(Username, ClientRandomId)
 );
 -- # &
 CREATE TABLE IF NOT EXISTS DeviceIds(
   Username VARCHAR(16) NOT NULL,
-  DeviceId VARCHAR(36) NOT NULL,
+  DeviceId VARCHAR(128) NOT NULL,
   PRIMARY KEY(Username, DeviceId)
 );
 -- # &
 CREATE TABLE IF NOT EXISTS SelfSignedIds(
     Username     VARCHAR(16) NOT NULL,
-    SelfSignedId VARCHAR(36) NOT NULL,
+    SelfSignedId VARCHAR(128) NOT NULL,
     PRIMARY KEY (Username, SelfSignedId)
 );
 -- # &
 CREATE TABLE IF NOT EXISTS XUIDs(
   Username VARCHAR(16) PRIMARY KEY,
-  XUID     VARCHAR(16) NOT NULL
+  XUID     VARCHAR(128) NOT NULL
 );
 -- #    }
 -- #  }
